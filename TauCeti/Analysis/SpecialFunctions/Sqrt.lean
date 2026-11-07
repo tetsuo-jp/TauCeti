@@ -7,6 +7,8 @@ module
 
 public import Mathlib.Analysis.SpecialFunctions.Sqrt
 
+import Mathlib.Analysis.MeanInequalitiesPow
+
 /-!
 # Square-root displacement estimates and limits at zero
 
@@ -157,6 +159,15 @@ lemma contDiff_div_sqrt_pow {k : WithTop ℕ∞} {ψ : ℝ → ℝ} (hψ : ContD
       filter_upwards [this] with s hs
       simp [image_eq_zero_of_notMem_tsupport hs]
     exact (contDiffAt_const (c := (0 : ℝ))).congr_of_eventuallyEq hev
+
+/-- `√(2 A + 2 W² m) ≤ √2 √A + √2 W √m` for nonnegative `A`, `m`, `W`. -/
+theorem sqrt_two_mul_add_two_mul_sq_mul_le {A W m : ℝ} (hA : 0 ≤ A) (hm : 0 ≤ m) (hW : 0 ≤ W) :
+    √(2 * A + 2 * W ^ 2 * m) ≤ √2 * √A + √2 * W * √m := by
+  have h := rpow_add_le_add_rpow (p := 1 / 2) (a := 2 * A) (b := 2 * W ^ 2 * m)
+    (by positivity) (by positivity) (by norm_num) (by norm_num)
+  simp only [← sqrt_eq_rpow] at h
+  refine h.trans_eq ?_
+  rw [sqrt_mul zero_le_two, sqrt_mul (by positivity), sqrt_mul zero_le_two, sqrt_sq hW]
 
 end Real
 
