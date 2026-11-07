@@ -27,6 +27,8 @@ submodule is `TauCeti.toMatrixAlgEquiv_extensionBasis_isUpperUnitriangular`, in
 
 * `Representation.isNilpotent_quotient_sub_one`: unipotent operators stay unipotent on the
   quotient by an invariant submodule.
+* `Representation.isNilpotent_sub_one_of_quotient`: an operator that is unipotent on the quotient
+  by a pointwise fixed submodule is unipotent.
 * `Representation.exists_basis_isUpperUnitriangular_of_isUnipotent`: simultaneous
   upper-unitriangularization of a unipotent monoid representation.
 * `Representation.isSolvable_of_injective_of_isUnipotent`: a group with a faithful
@@ -50,19 +52,52 @@ section Quotient
 
 variable {R G V : Type*} [Ring R] [Monoid G] [AddCommGroup V] [Module R V]
 
+/-- A submodule fixed pointwise by every group element is invariant. -/
+theorem _root_.Representation.le_comap_of_fixed (rho : Representation R G V)
+    (p : Submodule R V) (hfix : ∀ z : G, ∀ y ∈ p, rho z y = y) (z : G) :
+    p ≤ p.comap (rho z) :=
+  fun y hy ↦ by rw [Submodule.mem_comap, hfix z y hy]; exact hy
+
+/-- An invariant submodule is also invariant under `rho g - 1`. -/
+theorem _root_.Representation.le_comap_sub_one (rho : Representation R G V)
+    (p : Submodule R V) (hp : ∀ g, p ≤ p.comap (rho g)) (g : G) : p ≤ p.comap (rho g - 1) :=
+  fun x hx ↦ by
+    rw [Submodule.mem_comap, LinearMap.sub_apply, one_apply_eq_self]
+    exact p.sub_mem (Submodule.mem_comap.mp (hp g hx)) hx
+
+/-- On the quotient by an invariant submodule `p`, the operator `q g - 1` is induced by
+`rho g - 1`. -/
+theorem _root_.Representation.quotient_sub_one_eq_mapQ (rho : Representation R G V)
+    (p : Submodule R V) (hp : ∀ g, p ≤ p.comap (rho g)) (g : G) :
+    rho.quotient p hp g - 1 = p.mapQ p (rho g - 1) (rho.le_comap_sub_one p hp g) := by
+  ext x
+  simp [Representation.quotient_apply, Submodule.mapQ_apply]
+
 /-- If `rho g - 1` is nilpotent, then so is the operator `rho.quotient p hp g - 1` induced on the
 quotient of the representation `rho` by an invariant submodule `p`. -/
 theorem _root_.Representation.isNilpotent_quotient_sub_one (rho : Representation R G V)
     (p : Submodule R V) (hp : ∀ g, p ≤ p.comap (rho g)) {g : G}
     (hg : IsNilpotent (rho g - 1)) : IsNilpotent (rho.quotient p hp g - 1) := by
-  have hsub : p ≤ p.comap (rho g - 1) := fun x hx ↦ by
-    rw [Submodule.mem_comap, LinearMap.sub_apply, one_apply_eq_self]
-    exact p.sub_mem (Submodule.mem_comap.mp (hp g hx)) hx
-  have heq : rho.quotient p hp g - 1 = p.mapQ p (rho g - 1) hsub := by
-    ext x
-    simp [Representation.quotient_apply, Submodule.mapQ_apply]
-  rw [heq]
-  exact Module.End.IsNilpotent.mapQ hsub hg
+  rw [rho.quotient_sub_one_eq_mapQ p hp g]
+  exact Module.End.IsNilpotent.mapQ _ hg
+
+/-- If an element acts unipotently on the quotient by a pointwise fixed submodule, then it acts
+unipotently on the whole space. -/
+theorem _root_.Representation.isNilpotent_sub_one_of_quotient
+    (rho : Representation R G V) (p : Submodule R V) (hfix : ∀ z : G, ∀ y ∈ p, rho z y = y)
+    {g : G} (hn : IsNilpotent (rho.quotient p (rho.le_comap_of_fixed p hfix) g - 1)) :
+    IsNilpotent (rho g - 1) := by
+  obtain ⟨n, hn⟩ := hn
+  rw [rho.quotient_sub_one_eq_mapQ p _ g] at hn
+  refine ⟨n + 1, ?_⟩
+  ext y
+  rw [pow_succ', mul_apply_eq_comp]
+  have hymem : ((rho g - 1) ^ n) y ∈ p := by
+    apply (Submodule.Quotient.mk_eq_zero p).mp
+    have hz := LinearMap.congr_fun hn (p.mkQ y)
+    rw [← p.mapQ_pow (rho.le_comap_sub_one p (rho.le_comap_of_fixed p hfix) g) n] at hz
+    simpa only [Submodule.mkQ_apply, Submodule.mapQ_apply, LinearMap.zero_apply] using hz
+  rw [LinearMap.sub_apply, one_apply_eq_self, hfix g _ hymem, sub_self, LinearMap.zero_apply]
 
 end Quotient
 
