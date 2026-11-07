@@ -179,11 +179,11 @@ theorem exists_ball_windingNumber_zero {γ : ℝ → ℂ} {w : ℂ} {a b : ℝ} 
     exact hw_zero
 
 /-- A closed piecewise-`C¹` curve whose winding numbers about two points off the curve differ by
-less than `1 / 2` from `1` has winding numbers differing by exactly `1`. -/
+less than `1` from `1` has winding numbers differing by exactly `1`. -/
 theorem windingNumber_eq_add_one_of_dist_lt {Γ : ℝ → ℂ} {w₁ w₂ : ℂ}
     (hΓ : IsPiecewiseC1On Γ a c) (hclosed : Γ a = Γ c)
     (h₁ : w₁ ∉ Γ '' uIcc a c) (h₂ : w₂ ∉ Γ '' uIcc a c)
-    (hdist : dist (windingNumber Γ a c w₁ - windingNumber Γ a c w₂) (1 : ℂ) < 1 / 2) :
+    (hdist : dist (windingNumber Γ a c w₁ - windingNumber Γ a c w₂) (1 : ℂ) < 1) :
     windingNumber Γ a c w₁ = windingNumber Γ a c w₂ + 1 := by
   obtain ⟨m, hm⟩ := hΓ.exists_int_windingNumber hclosed fun t ht heq ↦ h₁ ⟨t, ht, heq⟩
   obtain ⟨n, hn⟩ := hΓ.exists_int_windingNumber hclosed fun t ht heq ↦ h₂ ⟨t, ht, heq⟩

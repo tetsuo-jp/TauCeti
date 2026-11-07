@@ -10,6 +10,7 @@ public import TauCeti.Analysis.Calculus.ContDiff.PiecewiseC1On
 import Mathlib.Analysis.SpecialFunctions.Complex.Log
 import TauCeti.Analysis.Calculus.ContDiff.PiecewiseC1On.AbsolutelyContinuous
 import TauCeti.Analysis.Complex.Basic
+import TauCeti.Analysis.Contour.Winding.AbsolutelyContinuous.Concat
 import TauCeti.Analysis.Contour.Winding.AbsolutelyContinuous.Continuity
 import TauCeti.Analysis.Contour.Winding.Continuity
 import TauCeti.Analysis.Contour.Winding.Integer
@@ -217,21 +218,15 @@ private theorem windingNumber_eq_segment_add_of_not_mem {Γ : ℝ → ℂ} {w : 
     (hseg : EqOn Γ (fun t : ℝ ↦ v * (t : ℂ) + z₀) (Icc a b)) (hw : w ∉ Γ '' uIcc a c) :
     windingNumber Γ a c w
       = windingNumber (fun t : ℝ ↦ v * (t : ℂ) + z₀) a b w + windingNumber Γ b c w := by
-  have hIcc_ab : Icc a b ⊆ uIcc a c := (Icc_subset_Icc le_rfl hbc).trans Icc_subset_uIcc
-  have hIcc_bc : Icc b c ⊆ uIcc a c := (Icc_subset_Icc hab le_rfl).trans Icc_subset_uIcc
-  have hΓbc : IsPiecewiseC1On Γ b c := hΓ.mono (by rwa [uIcc_of_le hbc])
-  have hΓab : IsPiecewiseC1On Γ a b := hΓ.mono (by rwa [uIcc_of_le hab])
-  have h_avoid_ab : ∀ t ∈ uIcc a b, Γ t ≠ w := fun t ht heq ↦
-    hw ⟨t, by rw [uIcc_of_le hab] at ht; exact hIcc_ab ht, heq⟩
-  have h_avoid_bc : ∀ t ∈ uIcc b c, Γ t ≠ w := fun t ht heq ↦
-    hw ⟨t, by rw [uIcc_of_le hbc] at ht; exact hIcc_bc ht, heq⟩
-  rw [windingNumber_concat
-    (cauchyPVExistsAt_of_avoidance hΓab.continuousOn h_avoid_ab
-      (intervalIntegrable_inv_sub_mul_deriv hΓab.continuousOn h_avoid_ab
-        hΓab.intervalIntegrable_deriv))
-    (cauchyPVExistsAt_of_avoidance hΓbc.continuousOn h_avoid_bc
-      (intervalIntegrable_inv_sub_mul_deriv hΓbc.continuousOn h_avoid_bc
-        hΓbc.intervalIntegrable_deriv))]
+  have hab' : uIcc a b ⊆ uIcc a c := by
+    rw [uIcc_of_le hab, uIcc_of_le (hab.trans hbc)]
+    exact Icc_subset_Icc le_rfl hbc
+  have hbc' : uIcc b c ⊆ uIcc a c := by
+    rw [uIcc_of_le hbc, uIcc_of_le (hab.trans hbc)]
+    exact Icc_subset_Icc hab le_rfl
+  rw [(hΓ.mono hab').absolutelyContinuousOnInterval.windingNumber_concat
+    (hΓ.mono hbc').absolutelyContinuousOnInterval (fun h ↦ hw (image_mono hab' h))
+    (fun h ↦ hw (image_mono hbc' h))]
   congr 1
   refine windingNumber_congr_curve fun t ht ↦ hseg ?_
   rw [uIoo_of_le hab] at ht
@@ -295,8 +290,8 @@ theorem exists_forall_windingNumber_eq_add_one_of_eqOn_segment {Γ : ℝ → ℂ
     simpa using (tendsto_windingNumber_segment_sub (z₀ := z₀) hv hs).add hrest
   have h_near : ∀ᶠ h : ℝ in 𝓝[>] 0,
       dist (windingNumber Γ a c (v * (s + h * I) + z₀) - windingNumber Γ a c (v * (s - h * I) + z₀))
-        (1 : ℂ) < 1 / 2 :=
-    h_tend (Metric.ball_mem_nhds (1 : ℂ) one_half_pos)
+        (1 : ℂ) < 1 :=
+    h_tend (Metric.ball_mem_nhds (1 : ℂ) one_pos)
   obtain ⟨h, hh_near, hh_pos, hh_lt⟩ := (h_near.and h_small).exists
   have h_jump := windingNumber_eq_add_one_of_dist_lt hΓ hclosed
     (h_off_add h hh_pos hh_lt) (h_off_sub h hh_pos hh_lt) hh_near
