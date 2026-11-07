@@ -306,6 +306,7 @@ theorem _root_.EReal.ne_top_of_coe_mul_ne_top {c : ℝ} (hc : 0 < c) {d : EReal}
   exact hd (EReal.coe_mul_top_of_pos hc)
 
 /-- Multiplication by a positive real number `c` preserves and reflects the order of `EReal`. -/
+@[simp]
 theorem _root_.EReal.coe_mul_le_coe_mul_iff {c : ℝ} (hc : 0 < c) (a b : EReal) :
     (c : EReal) * a ≤ (c : EReal) * b ↔ a ≤ b := by
   have hc' : 0 < (c : EReal) := EReal.coe_pos.2 hc
