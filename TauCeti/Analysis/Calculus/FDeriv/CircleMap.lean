@@ -21,6 +21,8 @@ circles about `z₀` shrink to points as their radius tends to `0`.
 
 ## Main results
 
+* `TauCeti.circleMap_mem_ball_diff_singleton`: the circle of radius `r < R` about `z₀` lies in the
+  punctured disc of radius `R`.
 * `TauCeti.diam_image_sphere_le_of_norm_fderiv_le`: if `‖du‖ ≤ M` on the circle of radius `ρ`
   about `z₀`, then the image of that circle has diameter at most `2π ρ M`.
 * `TauCeti.tendsto_diam_image_sphere_nhdsGT_zero_of_tendsto`: if `u` is differentiable near
@@ -34,6 +36,14 @@ namespace TauCeti
 
 open Complex Metric Set Filter Topology
 open scoped Real
+
+/-- The circle of radius `0 < r < R` about `z₀` lies in the punctured disc of radius `R`. -/
+theorem circleMap_mem_ball_diff_singleton {z₀ : ℂ} {r R : ℝ} (hr : 0 < r) (hrR : r < R)
+    (θ : ℝ) : circleMap z₀ r θ ∈ ball z₀ R \ {z₀} := by
+  have hsph := mem_sphere.1 (circleMap_mem_sphere z₀ hr.le θ)
+  refine ⟨mem_ball.2 (hsph.trans_lt hrR), fun h => ?_⟩
+  rw [mem_singleton_iff.1 h, dist_self] at hsph
+  exact hr.ne hsph
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] {u : ℂ → E} {z₀ : ℂ}
 

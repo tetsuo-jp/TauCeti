@@ -91,6 +91,9 @@ with the corresponding integral of `q`-th powers.
   exponents have finite multiplicative support.
 * `Real.rpow_finsum_of_pos`: `a ^ (∑ᶠ i, f i) = ∏ᶠ i, a ^ f i` for `0 < a` and finitely supported
   `f`.
+* `Real.le_sqrt_mul_rpow_sub_one_of_sq_le`: `x ≤ √B * d ^ (β - 1)` when
+  `d ^ 2 * x ^ 2 ≤ B * d ^ (2 * β)` with `d > 0`, the step turning a mean-value bound on `d ^ 2 *
+  x ^ 2` into a pointwise power bound on `x`.
 -/
 
 public section
@@ -226,6 +229,18 @@ theorem tendsto_pow_div_mul_sub_pow_atTop {n : ℕ} {ω : ℝ} (hn0 : n ≠ 0) (
     exact (sub_pos.2 this).ne'
   rw [div_pow, one_sub_div (pow_pos hD0 n).ne', inv_div]
   field_simp
+
+/-- If `d ^ 2 * x ^ 2 ≤ B * d ^ (2 * β)` with `d > 0`, then `x ≤ √B * d ^ (β - 1)`. -/
+theorem le_sqrt_mul_rpow_sub_one_of_sq_le {x d B β : ℝ} (hd : 0 < d) (hB : 0 ≤ B)
+    (hx : 0 ≤ x) (h : d ^ 2 * x ^ 2 ≤ B * d ^ (2 * β)) : x ≤ Real.sqrt B * d ^ (β - 1) := by
+  have hsq : (d * x) ^ 2 ≤ (Real.sqrt B * d ^ β) ^ 2 := by
+    have hp : d ^ (2 * β) = (d ^ β) ^ 2 := by
+      simpa only [Nat.cast_ofNat, mul_comm] using Real.rpow_mul_natCast hd.le β 2
+    rw [hp] at h
+    simpa only [mul_pow, Real.sq_sqrt hB] using h
+  have h' := (sq_le_sq₀ (by positivity) (by positivity)).mp hsq
+  rw [Real.rpow_sub_one hd.ne', ← mul_div_assoc, le_div_iff₀ hd]
+  nlinarith
 
 end Real
 

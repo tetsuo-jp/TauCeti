@@ -7,7 +7,9 @@ module
 
 public import TauCeti.Geometry.Symplectic.JHolomorphic.Energy.Decay
 import TauCeti.Geometry.Symplectic.JHolomorphic.Energy.Puncture
+import TauCeti.Analysis.Calculus.FDeriv.CircleMap
 import TauCeti.Analysis.Complex.OperatorNorm
+import TauCeti.Analysis.SpecialFunctions.Pow.Real
 import Mathlib.Analysis.SpecialFunctions.Integrability.Basic
 
 /-!
@@ -64,14 +66,8 @@ private theorem exists_energy_power_bound
     · filter_upwards [ae_restrict_mem
         (measurableSet_ball.diff (measurableSet_singleton z₀))] with z hz
       rw [Real.norm_of_nonneg (sq_nonneg _)]
-      have hI : ‖fderiv ℝ u z I‖ ≤ max M 0 * ‖fderiv ℝ u z 1‖ := by
-        rw [hCR z hz]
-        exact ((J (u z)).le_opNorm _).trans
-          (mul_le_mul_of_nonneg_right ((hJ z hz).trans (le_max_left _ _)) (norm_nonneg _))
-      have hop : ‖fderiv ℝ u z‖ ≤ (1 + max M 0) * ‖fderiv ℝ u z 1‖ := by
-        refine ContinuousLinearMap.opNorm_le_bound _ (by positivity) fun w ↦ ?_
-        exact ((fderiv ℝ u z).norm_apply_le_norm_one_add_norm_I w).trans
-          (mul_le_mul_of_nonneg_right (by linarith) (norm_nonneg w))
+      have hop := (fderiv ℝ u z).norm_le_one_add_mul_norm_one_of_apply_I_eq (J (u z))
+        (le_max_right M 0) (hCR z hz) ((hJ z hz).trans (le_max_left M 0))
       simpa only [mul_pow] using pow_le_pow_left₀ (norm_nonneg _) hop 2
   let b := R / 2
   let α := 2 * c / (1 + M) ^ 2
@@ -81,50 +77,6 @@ private theorem exists_energy_power_bound
     (b := b) hr.1 hr.2.le (by dsimp [b]; linarith)
   rw [Real.div_rpow hr.1.le (half_pos hR).le] at h
   simpa only [b, α, E, div_eq_mul_inv, mul_assoc, mul_left_comm, mul_comm] using h
-
-/-- The point of the circle of radius `R / 2` about `z₀` on the positive real axis lies in the
-punctured disc of radius `R`. -/
-private theorem circleMap_half_mem_ball_diff_singleton (z₀ : ℂ) (hR : 0 < R) :
-    circleMap z₀ (R / 2) 0 ∈ ball z₀ R \ {z₀} := by
-  constructor
-  · simp only [mem_ball, dist_eq_norm, circleMap_sub_center, norm_circleMap_zero,
-      abs_of_pos (half_pos hR)]
-    linarith
-  · exact sub_ne_zero.mp (norm_pos_iff.mp (by
-      simpa only [circleMap_sub_center, norm_circleMap_zero,
-        abs_of_pos (half_pos hR)] using half_pos hR))
-
-/-- `r ↦ A * (2 * r) ^ γ` tends to `0` at `0` for `γ > 0`. -/
-private theorem tendsto_const_mul_two_mul_rpow_nhds_zero {γ : ℝ} (A : ℝ) (hγ : 0 < γ) :
-    Tendsto (fun r : ℝ ↦ A * (2 * r) ^ γ) (𝓝 0) (𝓝 0) := by
-  simpa [Real.zero_rpow hγ.ne'] using
-    ((Real.continuous_rpow_const hγ.le).comp
-      (continuous_const.mul continuous_id)).const_mul A |>.tendsto 0
-
-/-- If `d ^ 2 * x ^ 2 ≤ B * d ^ (2 * β)` with `d > 0`, then `x ≤ √B * d ^ (β - 1)`. -/
-private theorem le_sqrt_mul_rpow_sub_one_of_sq_le {x d B β : ℝ} (hd : 0 < d) (hB : 0 ≤ B)
-    (hx : 0 ≤ x) (h : d ^ 2 * x ^ 2 ≤ B * d ^ (2 * β)) : x ≤ Real.sqrt B * d ^ (β - 1) := by
-  have hsq : (d * x) ^ 2 ≤ (Real.sqrt B * d ^ β) ^ 2 := by
-    have hp : d ^ (2 * β) = (d ^ β) ^ 2 := by
-      simpa only [Nat.cast_ofNat, mul_comm] using Real.rpow_mul_natCast hd.le β 2
-    rw [hp] at h
-    simpa only [mul_pow, Real.sq_sqrt hB] using h
-  have h' := (sq_le_sq₀ (by positivity) (by positivity)).mp hsq
-  rw [Real.rpow_sub_one hd.ne', ← mul_div_assoc, le_div_iff₀ hd]
-  nlinarith
-
-omit [FiniteDimensional ℝ V] in
-/-- The Cauchy--Riemann equation controls the full differential by its real-direction part. -/
-private theorem norm_fderiv_le_one_add_mul_of_cauchyRiemann {z : ℂ} (hM : 0 ≤ M)
-    (hCR : fderiv ℝ u z I = J (u z) (fderiv ℝ u z 1)) (hbound : ‖J (u z)‖ ≤ M) :
-    ‖fderiv ℝ u z‖ ≤ (1 + M) * ‖fderiv ℝ u z 1‖ := by
-  have hI : ‖fderiv ℝ u z I‖ ≤ M * ‖fderiv ℝ u z 1‖ := by
-    rw [hCR]
-    exact ((J (u z)).le_opNorm _).trans
-      (mul_le_mul_of_nonneg_right hbound (norm_nonneg _))
-  refine ContinuousLinearMap.opNorm_le_bound _ (by positivity) fun w ↦ ?_
-  exact ((fderiv ℝ u z).norm_apply_le_norm_one_add_norm_I w).trans
-    (mul_le_mul_of_nonneg_right (by nlinarith) (norm_nonneg w))
 
 /-- The differential of a finite-energy pseudoholomorphic curve on a punctured disc has a
 power bound with exponent strictly greater than `-1`. Both the radius and the bound are
@@ -142,7 +94,7 @@ theorem exists_pos_norm_fderiv_le_rpow
     (henergy : IntegrableOn (fun z ↦ ‖fderiv ℝ u z 1‖ ^ 2) (ball z₀ R)) :
     ∃ ε > 0, ε < R ∧ ∃ C > 0, ∀ z ∈ ball z₀ ε \ {z₀},
       ‖fderiv ℝ u z‖ ≤ C * ‖z - z₀‖ ^ (c / (1 + M) ^ 2 - 1) := by
-  have hmem := circleMap_half_mem_ball_diff_singleton z₀ hR
+  have hmem := circleMap_mem_ball_diff_singleton (z₀ := z₀) (half_pos hR) (half_lt_self hR) 0
   have hM : 0 ≤ M := (norm_nonneg _).trans (hbound _ hmem)
   -- Normalize the energy power bound, then choose a radius below the mean-value threshold.
   let β := c / (1 + M) ^ 2
@@ -151,7 +103,11 @@ theorem exists_pos_norm_fderiv_le_rpow
     (hu.of_le (by norm_num)) hCR htame hbound henergy
   obtain ⟨δ, hδ, hmean⟩ :=
     exists_pos_sq_norm_fderiv_one_le_energy hW hJ hK hKW hJsq hu hCR huK henergy
-  have hlim := tendsto_const_mul_two_mul_rpow_nhds_zero A (by positivity : 0 < 2 * β)
+  have ht : Tendsto (fun r : ℝ ↦ 2 * r) (𝓝 0) (𝓝 0) := by
+    simpa using (tendsto_id (x := 𝓝 (0 : ℝ))).const_mul 2
+  have hlim : Tendsto (fun r : ℝ ↦ A * (2 * r) ^ (2 * β)) (𝓝 0) (𝓝 0) := by
+    simpa [Real.zero_rpow (by positivity : 2 * β ≠ 0)] using
+      (ht.rpow_const_nhds_zero (by positivity : 0 < 2 * β)).const_mul A
   obtain ⟨η, hη, hηbound⟩ := Metric.eventually_nhds_iff.mp
     (hlim.eventually (gt_mem_nhds hδ))
   let ε := min η (R / 4)
@@ -188,8 +144,9 @@ theorem exists_pos_norm_fderiv_le_rpow
     calc
       _ ≤ 32 / Real.pi * (A * (2 ^ (2 * β) * d ^ (2 * β))) := h
       _ = B * d ^ (2 * β) := by dsimp [B]; ring
-  have hreal := le_sqrt_mul_rpow_sub_one_of_sq_le hd hB (norm_nonneg _) hsquare
-  have hop := norm_fderiv_le_one_add_mul_of_cauchyRiemann hM (hCR z hzR) (hbound z hzR)
+  have hreal := Real.le_sqrt_mul_rpow_sub_one_of_sq_le hd hB (norm_nonneg _) hsquare
+  have hop := (fderiv ℝ u z).norm_le_one_add_mul_norm_one_of_apply_I_eq (J (u z)) hM
+    (hCR z hzR) (hbound z hzR)
   calc
     ‖fderiv ℝ u z‖ ≤ (1 + M) * (Real.sqrt B * d ^ (β - 1)) := by
       exact hop.trans (mul_le_mul_of_nonneg_left hreal (by positivity))
