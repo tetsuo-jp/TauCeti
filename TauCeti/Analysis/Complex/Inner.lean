@@ -39,12 +39,13 @@ theorem mul_conj_eq_one_of_norm_eq_one (hζ : ‖ζ‖ = 1) : ζ * (starRingEnd 
 
 /-- **Weighted unit complex numbers of the maximal sum point the same way.** If the unit complex
 numbers `z i`, `i ∈ s`, with positive real weights `d i` have weighted sum `μ₀ * ∑ d i` for a
-unit `μ₀`, then every `z i` equals `μ₀`: after rotating by `conj μ₀`, the weighted sum is the sum
-of the norms, so every rotated term is its own norm. -/
+unit `μ₀`, then every `z i` equals `μ₀`. -/
 theorem eq_of_sum_mul_eq_of_norm_eq_one {ι : Type*} {s : Finset ι} {z : ι → ℂ} {d : ι → ℝ}
     {μ₀ : ℂ} (hμ₀ : ‖μ₀‖ = 1) (hd : ∀ i ∈ s, 0 < d i) (hz : ∀ i ∈ s, ‖z i‖ = 1)
     (hsum : ∑ i ∈ s, (d i : ℂ) * z i = μ₀ * ∑ i ∈ s, (d i : ℂ)) :
     ∀ i ∈ s, z i = μ₀ := by
+  -- After rotating by `conj μ₀`, the weighted sum is the sum of the norms, so every rotated term
+  -- is its own norm.
   have hkey : ∑ i ∈ s, (d i : ℂ) * ((starRingEnd ℂ) μ₀ * z i) = ∑ i ∈ s, (d i : ℂ) := by
     calc ∑ i ∈ s, (d i : ℂ) * ((starRingEnd ℂ) μ₀ * z i)
         = (starRingEnd ℂ) μ₀ * ∑ i ∈ s, (d i : ℂ) * z i := by
