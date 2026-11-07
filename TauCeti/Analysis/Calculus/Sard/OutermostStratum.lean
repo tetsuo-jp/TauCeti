@@ -9,7 +9,10 @@ public import TauCeti.Analysis.Calculus.Sard.VanishingDerivative
 import Mathlib.Analysis.Calculus.InverseFunctionTheorem.ContDiff
 import Mathlib.Analysis.Normed.Module.HahnBanach
 import Mathlib.MeasureTheory.Measure.Prod
-import TauCeti.Analysis.Normed.Operator.Surjective
+import TauCeti.Analysis.Calculus.FDeriv.Comp
+import TauCeti.Analysis.Calculus.FDeriv.CriticalSet
+import TauCeti.Analysis.Normed.Operator.Splitting.Basic
+import TauCeti.MeasureTheory.Measure.Haar.NormedSpace
 import TauCeti.MeasureTheory.Measure.Haar.Unique
 import TauCeti.MeasureTheory.Measure.LocallyNull
 
@@ -96,120 +99,11 @@ namespace TauCeti
 
 universe u v
 
-section Splitting
-
-variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
-  {F : Type*} [NormedAddCommGroup F] [NormedSpace ℝ F]
-
-/-- Splitting off a direction: if a continuous linear functional `ψ` takes the value `1` at `v₀`,
-then `E` is isomorphic to `ℝ × ker ψ` through `x ↦ (ψ x, π x)`, where `π` is the projection onto
-the kernel along `v₀`. -/
-theorem exists_continuousLinearEquiv_prod_ker (ψ : E →L[ℝ] ℝ) {v₀ : E} (hv : ψ v₀ = 1) :
-    ∃ (π : E →L[ℝ] ↥(LinearMap.ker (ψ : E →ₗ[ℝ] ℝ)))
-      (e : E ≃L[ℝ] ℝ × ↥(LinearMap.ker (ψ : E →ₗ[ℝ] ℝ))), ∀ x, e x = (ψ x, π x) := by
-  set s : ℝ →L[ℝ] E := (ContinuousLinearMap.id ℝ ℝ).smulRight v₀
-  have h : Function.RightInverse s ψ := fun t ↦ by simp [s, hv]
-  exact ⟨ψ.projKerOfRightInverse s h, ContinuousLinearEquiv.equivOfRightInverse ψ s h,
-    fun x ↦ rfl⟩
-
-end Splitting
-
-section Slicing
-
-variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
-  {F : Type*} [NormedAddCommGroup F] [NormedSpace ℝ F]
-  {G₁ G₂ : Type*} [NormedAddCommGroup G₁] [NormedSpace ℝ G₁]
-  [NormedAddCommGroup G₂] [NormedSpace ℝ G₂]
-
-/-- The critical points of a map restricted to a level set of a functional `φ` are critical
-points of the map. Precisely, let `(φ, ρ)` split `F` as `ℝ × G`, let `γ` parametrize a family of
-points along which `φ ∘ f` is locally constant, and let `φ ∘ Df` be nonzero at `γ z`. If
-`ρ ∘ f ∘ γ` has surjective derivative at `z`, then `Df` is surjective at `γ z`. -/
-theorem surjective_fderiv_of_surjective_fderiv_comp {f : E → F} {γ : G₁ → E} {z : G₁} {c : ℝ}
-    (φ : F →L[ℝ] ℝ) (ρ : F →L[ℝ] G₂) (eF : F ≃L[ℝ] ℝ × G₂) (heF : ∀ w, eF w = (φ w, ρ w))
-    (hγ : DifferentiableAt ℝ γ z) (hf : DifferentiableAt ℝ f (γ z))
-    (hconst : (fun w ↦ φ (f (γ w))) =ᶠ[𝓝 z] fun _ ↦ c)
-    (hne : ∃ v, φ (fderiv ℝ f (γ z) v) ≠ 0)
-    (hs : Surjective (fderiv ℝ (fun w ↦ ρ (f (γ w))) z)) : Surjective (fderiv ℝ f (γ z)) := by
-  set T : G₁ →L[ℝ] E := fderiv ℝ γ z
-  set A : E →L[ℝ] F := fderiv ℝ f (γ z)
-  have hT : HasFDerivAt γ T z := hγ.hasFDerivAt
-  have hA : HasFDerivAt f A (γ z) := hf.hasFDerivAt
-  have hGd : HasFDerivAt (fun w ↦ ρ (f (γ w))) (ρ.comp (A.comp T)) z :=
-    ρ.hasFDerivAt.comp z (hA.comp z hT)
-  have hzero : ∀ w : G₁, φ (A (T w)) = 0 := by
-    have hd : HasFDerivAt (fun w ↦ φ (f (γ w))) (φ.comp (A.comp T)) z :=
-      φ.hasFDerivAt.comp z (hA.comp z hT)
-    have hzero' : φ.comp (A.comp T) = 0 :=
-      (hd.congr_of_eventuallyEq hconst.symm).unique (hasFDerivAt_const c z)
-    intro w
-    simpa using congrArg (fun B : G₁ →L[ℝ] ℝ ↦ B w) hzero'
-  have hker : ∀ y, φ y = 0 → ∃ u, A u = y := by
-    intro y hy
-    obtain ⟨w, hw⟩ := hs (ρ y)
-    rw [hGd.fderiv] at hw
-    refine ⟨T w, eF.injective ?_⟩
-    rw [heF, heF, hzero w, hy]
-    exact Prod.ext rfl hw
-  obtain ⟨v, hv⟩ := hne
-  intro w
-  obtain ⟨u, hu⟩ := hker (w - (φ w / φ (A v)) • A v) (by simp [div_mul_cancel₀ _ hv])
-  refine ⟨u + (φ w / φ (A v)) • v, ?_⟩
-  rw [map_add, map_smul, hu]
-  abel
-
-end Slicing
-
-section CriticalSet
-
-variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
-  {F : Type*} [NormedAddCommGroup F] [NormedSpace ℝ F] [FiniteDimensional ℝ F]
-
-/-- The image of the critical points of `f` lying in a compact set `K` on which `f` and `Df` are
-continuous is compact, since the critical points form a closed set. -/
-theorem isCompact_image_inter_setOf_not_surjective_fderiv {f : E → F} {K : Set E}
-    (hK : IsCompact K) (hf : ∀ x ∈ K, ContinuousAt f x)
-    (hf' : ∀ x ∈ K, ContinuousAt (fderiv ℝ f) x) :
-    IsCompact (f '' ({x | ¬ Surjective (fderiv ℝ f x)} ∩ K)) := by
-  have hCK : IsCompact ({x | ¬ Surjective (fderiv ℝ f x)} ∩ K) := by
-    refine hK.of_isClosed_subset ?_ inter_subset_right
-    have hclosed : IsClosed (K ∩ (fderiv ℝ f) ⁻¹' {A : E →L[ℝ] F | Surjective A}ᶜ) :=
-      ContinuousOn.preimage_isClosed_of_isClosed (fun x hx ↦ (hf' x hx).continuousWithinAt)
-        hK.isClosed isOpen_setOf_surjective.isClosed_compl
-    rwa [inter_comm] at hclosed
-  exact hCK.image_of_continuousOn fun x hx ↦ (hf x hx.2).continuousWithinAt
-
-end CriticalSet
-
-section Fubini
-
-variable {F : Type*} [NormedAddCommGroup F] [NormedSpace ℝ F]
-  [MeasurableSpace F] [BorelSpace F] (ν : Measure F) [IsAddHaarMeasure ν]
-  {G : Type*} [NormedAddCommGroup G] [NormedSpace ℝ G] [FiniteDimensional ℝ G]
-  [MeasurableSpace G] [BorelSpace G]
-
-/-- Fubini for a compact set in a split space: if `F ≃L[ℝ] ℝ × G` and every slice
-`{y | (t, y) ∈ e S}` of the image of a compact set `S` is null for the Haar measure of `G`, then
-`S` is null for any additive Haar measure of `F`. -/
-theorem addHaar_eq_zero_of_prod_mk_preimage_image_eq_zero (e : F ≃L[ℝ] ℝ × G) {S : Set F}
-    (hS : IsCompact S) (h : ∀ t : ℝ, (addHaar : Measure G) (Prod.mk t ⁻¹' (e '' S)) = 0) :
-    ν S = 0 := by
-  have hprod : ((volume : Measure ℝ).prod (addHaar : Measure G)) (e '' S) = 0 :=
-    measure_prod_null_of_ae_null (hS.image e.continuous).isClosed.measurableSet
-      (Filter.Eventually.of_forall h)
-  have := (e.toContinuousAddEquiv.quasiMeasurePreserving_addHaar ν
-    ((volume : Measure ℝ).prod (addHaar : Measure G))).preimage_null hprod
-  rwa [ContinuousLinearEquiv.toContinuousAddEquiv_coe,
-    Set.preimage_image_eq _ e.injective] at this
-
-end Fubini
-
 section MorseSard
 
 variable {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
   {F : Type v} [NormedAddCommGroup F] [NormedSpace ℝ F] [FiniteDimensional ℝ F]
   [MeasurableSpace F] [BorelSpace F] {U : Set E} {f : E → F} (ν : Measure F) [IsAddHaarMeasure ν]
-
 
 omit [FiniteDimensional ℝ F] [MeasurableSpace F] [BorelSpace F] in
 /-- The straightening step: if `g` has an invertible derivative at `a` and is `C^k` there, then
@@ -263,7 +157,7 @@ private theorem addHaar_image_criticalPoints_inter_eq_zero {K : Set E} (hK : IsC
     [NormedAddCommGroup G₂] [NormedSpace ℝ G₂] [FiniteDimensional ℝ G₂]
     [MeasurableSpace G₂] [BorelSpace G₂] (φ : F →L[ℝ] ℝ) (ρ : F →L[ℝ] G₂)
     (eF : F ≃L[ℝ] ℝ × G₂) (heF : ∀ w, eF w = (φ w, ρ w)) (π : E → G₁) (Θ : ℝ × G₁ → E)
-    (V : Set (ℝ × G₁)) (hfK : ∀ x ∈ K, ContinuousAt f x ∧ ContinuousAt (fderiv ℝ f) x)
+    (V : Set (ℝ × G₁)) (hfK : ContinuousOn f K) (hfK' : ContinuousOn (fderiv ℝ f) K)
     (hKV : ∀ x ∈ K, Θ (φ (f x), π x) = x ∧ (φ (f x), π x) ∈ V)
     (hcrit : ∀ t z, (t, z) ∈ V → ¬ Surjective (fderiv ℝ f (Θ (t, z))) →
       ¬ Surjective (fderiv ℝ (fun w ↦ ρ (f (Θ (t, w)))) z))
@@ -271,8 +165,7 @@ private theorem addHaar_image_criticalPoints_inter_eq_zero {K : Set E} (hK : IsC
       ({z | (t, z) ∈ V} ∩ {z | ¬ Surjective (fderiv ℝ (fun w ↦ ρ (f (Θ (t, w)))) z)})) = 0) :
     ν (f '' ({x | ¬ Surjective (fderiv ℝ f x)} ∩ K)) = 0 := by
   refine addHaar_eq_zero_of_prod_mk_preimage_image_eq_zero ν eF
-    (isCompact_image_inter_setOf_not_surjective_fderiv hK (fun x hx ↦ (hfK x hx).1)
-      fun x hx ↦ (hfK x hx).2) fun t ↦ measure_mono_null ?_ (hrec t)
+    (hK.image_inter_setOf_not_surjective_fderiv hfK hfK') fun t ↦ measure_mono_null ?_ (hrec t)
   rintro y ⟨-, ⟨x, ⟨hxc, hxK⟩, rfl⟩, hxy⟩
   obtain ⟨hxΘ, hxV⟩ := hKV x hxK
   rw [heF] at hxy
@@ -314,15 +207,16 @@ private theorem exists_pos_addHaar_image_criticalPoints_inter_closedBall_eq_zero
   have hKW : Metric.closedBall a (r / 2) ⊆ W :=
     (Metric.closedBall_subset_ball (by linarith)).trans hrW
   refine ⟨r / 2, by positivity, ?_⟩
+  have hKU : ∀ x ∈ Metric.closedBall a (r / 2), x ∈ U := fun x hx ↦ (hWsub x (hKW hx)).1
   refine addHaar_image_criticalPoints_inter_eq_zero ν (isCompact_closedBall a (r / 2)) φ ρ eF heF
-    π Θ V (fun x hx ↦ ?_) (fun x hx ↦ ⟨(hWsub x (hKW hx)).2.1, (hWsub x (hKW hx)).2.2⟩)
+    π Θ V (fun x hx ↦ (hf x (hKU x hx)).continuousAt.continuousWithinAt)
+    (fun x hx ↦ ((hf x (hKU x hx)).continuousAt_fderiv hk).continuousWithinAt)
+    (fun x hx ↦ ⟨(hWsub x (hKW hx)).2.1, (hWsub x (hKW hx)).2.2⟩)
     (fun t z hz hx hs ↦ hx ?_) fun t ↦ hrec _ _ (hVopen.preimage (by fun_prop)) fun z hz ↦ ?_
-  · have hxU := (hWsub x (hKW hx)).1
-    exact ⟨(hf x hxU).continuousAt, (hf x hxU).continuousAt_fderiv hk⟩
   · obtain ⟨hΘC, -, hΘU, hΘne⟩ := hVsub (t, z) hz
     have hΘt : ContDiffAt ℝ (k : ℕ∞ω) (fun w ↦ Θ (t, w)) z :=
       hΘC.comp z (contDiffAt_const.prodMk contDiffAt_id)
-    refine surjective_fderiv_of_surjective_fderiv_comp φ ρ eF heF
+    refine ContinuousLinearMap.surjective_fderiv_of_surjective_fderiv_comp φ ρ eF heF
       (γ := fun w ↦ Θ (t, w)) (z := z)
       (hΘt.differentiableAt hk) ((hf _ hΘU).differentiableAt hk) (c := t) ?_ ?_ hs
     · refine Filter.eventuallyEq_of_mem ((hVopen.preimage (by fun_prop)).mem_nhds hz) fun w hw ↦ ?_
@@ -406,9 +300,10 @@ private theorem addHaar_image_criticalPoints_eq_zero_aux (P : ℕ → ℕ → Pr
         simpa using not_not.1 (not_exists.1 hc v))
     obtain ⟨φ, hφ⟩ := SeparatingDual.exists_eq_one (R := ℝ) hv₀
     -- The two hyperplanes, and the splittings of the source and target along them.
-    obtain ⟨π, eE, heE⟩ := exists_continuousLinearEquiv_prod_ker (φ.comp (fderiv ℝ f a))
+    obtain ⟨π, eE, heE⟩ :=
+      ContinuousLinearMap.exists_continuousLinearEquiv_prod_ker (φ.comp (fderiv ℝ f a))
       (v₀ := v₀) hφ
-    obtain ⟨ρ, eF, heF⟩ := exists_continuousLinearEquiv_prod_ker φ hφ
+    obtain ⟨ρ, eF, heF⟩ := ContinuousLinearMap.exists_continuousLinearEquiv_prod_ker φ hφ
     let mFk : MeasurableSpace ↥(LinearMap.ker (φ : F →ₗ[ℝ] ℝ)) := borel _
     have bFk : BorelSpace ↥(LinearMap.ker (φ : F →ₗ[ℝ] ℝ)) := ⟨rfl⟩
     have hEk : finrank ℝ ↥(LinearMap.ker ((φ.comp (fderiv ℝ f a) : E →L[ℝ] ℝ) : E →ₗ[ℝ] ℝ)) + 1 =

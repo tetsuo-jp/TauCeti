@@ -9,6 +9,7 @@ public import Mathlib.Topology.Algebra.Module.ContinuousLinearMap.Invertible
 public import Mathlib.Topology.Algebra.Module.ContinuousLinearMap.Restrict
 public import Mathlib.Topology.Algebra.Module.Complement
 public import Mathlib.LinearAlgebra.FiniteDimensional.Defs
+public import Mathlib.Analysis.Normed.Module.Basic
 import Mathlib.Topology.Algebra.Module.Equiv.Prod
 import TauCeti.LinearAlgebra.Dimension.Submodule
 
@@ -265,6 +266,23 @@ theorem isTopCompl_of_isInvertible_prod_coprod [FiniteDimensional K V]
   simp [snd_kerSection_coprod_apply hinv hV]
 
 end CokernelComplement
+
+section SplitOffDirection
+
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+
+/-- Splitting off a direction: if a continuous linear functional `ψ` takes the value `1` at `v₀`,
+then `E` is isomorphic to `ℝ × ker ψ` through `x ↦ (ψ x, π x)`, where `π` is the projection onto
+the kernel along `v₀`. -/
+theorem exists_continuousLinearEquiv_prod_ker (ψ : E →L[ℝ] ℝ) {v₀ : E} (hv : ψ v₀ = 1) :
+    ∃ (π : E →L[ℝ] ↥(LinearMap.ker (ψ : E →ₗ[ℝ] ℝ)))
+      (e : E ≃L[ℝ] ℝ × ↥(LinearMap.ker (ψ : E →ₗ[ℝ] ℝ))), ∀ x, e x = (ψ x, π x) := by
+  set s : ℝ →L[ℝ] E := (ContinuousLinearMap.id ℝ ℝ).smulRight v₀
+  have h : Function.RightInverse s ψ := fun t ↦ by simp [s, hv]
+  exact ⟨ψ.projKerOfRightInverse s h, ContinuousLinearEquiv.equivOfRightInverse ψ s h,
+    fun x ↦ rfl⟩
+
+end SplitOffDirection
 
 end ContinuousLinearMap
 

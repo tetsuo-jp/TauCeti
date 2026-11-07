@@ -10,6 +10,8 @@ public import Mathlib.MeasureTheory.Measure.Lebesgue.EqHaar
 public import Mathlib.Analysis.Calculus.Deriv.Basic
 import Mathlib.Analysis.Calculus.Deriv.Mul
 import Mathlib.Analysis.Calculus.Deriv.Pow
+import TauCeti.MeasureTheory.Measure.Haar.Unique
+import Mathlib.MeasureTheory.Measure.Prod
 import Mathlib.MeasureTheory.Measure.Real
 import Mathlib.RingTheory.Norm.Transitivity
 import TauCeti.RingTheory.Norm.RCLike
@@ -418,5 +420,32 @@ theorem _root_.ContinuousLinearMap.norm_det_le_opNorm_pow {𝕜 E : Type*} [RCLi
   exact (pow_le_pow_iff_left₀ (norm_nonneg _) (by positivity) finrank_pos.ne').1 h
 
 end TauCeti
+
+namespace MeasureTheory.Measure
+
+section Fubini
+
+variable {F : Type*} [NormedAddCommGroup F] [NormedSpace ℝ F]
+  [MeasurableSpace F] [BorelSpace F] (ν : Measure F) [IsAddHaarMeasure ν]
+  {G : Type*} [NormedAddCommGroup G] [NormedSpace ℝ G] [FiniteDimensional ℝ G]
+  [MeasurableSpace G] [BorelSpace G]
+
+/-- Fubini for a compact set in a split space: if `F ≃L[ℝ] ℝ × G` and every slice
+`{y | (t, y) ∈ e S}` of the image of a compact set `S` is null for the Haar measure of `G`, then
+`S` is null for any additive Haar measure of `F`. -/
+theorem addHaar_eq_zero_of_prod_mk_preimage_image_eq_zero (e : F ≃L[ℝ] ℝ × G) {S : Set F}
+    (hS : IsCompact S) (h : ∀ t : ℝ, (addHaar : Measure G) (Prod.mk t ⁻¹' (e '' S)) = 0) :
+    ν S = 0 := by
+  have hprod : ((volume : Measure ℝ).prod (addHaar : Measure G)) (e '' S) = 0 :=
+    measure_prod_null_of_ae_null (hS.image e.continuous).isClosed.measurableSet
+      (Filter.Eventually.of_forall h)
+  have := (e.toContinuousAddEquiv.quasiMeasurePreserving_addHaar ν
+    ((volume : Measure ℝ).prod (addHaar : Measure G))).preimage_null hprod
+  rwa [ContinuousLinearEquiv.toContinuousAddEquiv_coe,
+    Set.preimage_image_eq _ e.injective] at this
+
+end Fubini
+
+end MeasureTheory.Measure
 
 end
