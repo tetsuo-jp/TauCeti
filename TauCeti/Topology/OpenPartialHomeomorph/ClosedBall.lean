@@ -57,7 +57,7 @@ theorem exists_finset_closedBall_cover (φ : OpenPartialHomeomorph M E) {A U : S
 `f x` is `{x}`. -/
 theorem preimage_singleton_inter_symm_image_ball {N : Type*} {f : M → N} {x : M}
     (e : OpenPartialHomeomorph M E) (hx : x ∈ e.source) {r : ℝ} (hr : 0 < r)
-    (hisol : ∀ z ∈ closedBall (e x) r, z ≠ e x → f (e.symm z) ≠ f x) :
+    (hisol : ∀ z ∈ ball (e x) r, z ≠ e x → f (e.symm z) ≠ f x) :
     f ⁻¹' {f x} ∩ e.symm '' ball (e x) r = {x} := by
   have hxmem : x ∈ e.symm '' ball (e x) r := ⟨e x, mem_ball_self hr, e.left_inv hx⟩
   ext b
@@ -66,7 +66,7 @@ theorem preimage_singleton_inter_symm_image_ball {N : Type*} {f : M → N} {x : 
     by_cases hze : z = e x
     · rw [hze]
       exact e.left_inv hx
-    · exact ((hisol z (ball_subset_closedBall hz) hze) hbf).elim
+    · exact ((hisol z hz hze) hbf).elim
   · rw [mem_singleton_iff] at hb
     subst hb
     exact ⟨rfl, hxmem⟩

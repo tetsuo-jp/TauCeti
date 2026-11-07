@@ -293,7 +293,8 @@ private theorem exists_nhds_localMultiplicity_fiber_sum_of_charts
   have hV : (e' : Y → ℂ) ⁻¹' Metric.ball (e' (f x)) δ ∩ e'.source ∈ 𝓝 (f x) := by
     refine inter_mem ?_ (e'.open_source.mem_nhds hfx)
     exact (e'.continuousAt hfx).preimage_mem_nhds (Metric.ball_mem_nhds (e' (f x)) hδ)
-  have hcenter := e.preimage_singleton_inter_symm_image_ball hx hr hisol
+  have hcenter := e.preimage_singleton_inter_symm_image_ball hx hr fun z hz hzne ↦
+    hisol z (Metric.ball_subset_closedBall hz) hzne
   refine ⟨e.symm '' Metric.ball (e x) r, hU, ?_,
     (e' : Y → ℂ) ⁻¹' Metric.ball (e' (f x)) δ ∩ e'.source, hV, hcenter, ?_⟩
   · rintro _ ⟨z, hz, rfl⟩
