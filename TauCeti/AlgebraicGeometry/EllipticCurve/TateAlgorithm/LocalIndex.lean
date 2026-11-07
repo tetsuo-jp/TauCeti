@@ -7,6 +7,7 @@ module
 
 public import TauCeti.AlgebraicGeometry.EllipticCurve.TateAlgorithm.Reduction.Type
 import TauCeti.RingTheory.LocalRing.MaximalIdeal.Generator
+import TauCeti.RingTheory.Polynomial.Ideal
 
 /-!
 # Tate's algorithm: the local index
@@ -381,96 +382,12 @@ theorem natCard_tateCubicRoots_eq [IsLocalRing R] (hϖ : maximalIdeal R = Ideal.
   -- the equivalence `R ⧸ (ϖ) ≃ R ⧸ 𝔪` sends the class of `t` to its residue (`residue_def`)
   simp [Ideal.quotEquivOfEq_mk, ← residue_def]
 
-/-- The roots of the residue cubic of Step 6 lie among the roots of a nonzero polynomial of degree
-at most `3` over `R ⧸ (ϖ)`: the first nonzero coefficient of `a₆, a₄ ϖ, a₂ ϖ², ϖ³` modulo `ϖ⁴`
-gives the polynomial, which is the monic cubic on the normal form of Step 6. -/
-private lemma exists_poly_of_tateCubic (hϖ : Prime ϖ) (a₂ a₄ a₆ : R) :
-    ∃ p : (R ⧸ Ideal.span {ϖ})[X], p ≠ 0 ∧ p.natDegree ≤ 3 ∧ ∀ t : R,
-      ϖ ^ 4 ∣ (ϖ * t) ^ 3 + a₂ * (ϖ * t) ^ 2 + a₄ * (ϖ * t) + a₆ →
-        p.IsRoot (Ideal.Quotient.mk _ t) := by
-  have : (Ideal.span {ϖ}).IsPrime := (Ideal.span_singleton_prime hϖ.ne_zero).2 hϖ
-  have hm (x : R) (hx : ϖ ∣ x) : Ideal.Quotient.mk (Ideal.span {ϖ}) x = 0 :=
-    Ideal.Quotient.eq_zero_iff_mem.2 (Ideal.mem_span_singleton.2 hx)
-  have hm' (x : R) (hx : Ideal.Quotient.mk (Ideal.span {ϖ}) x = 0) : ϖ ∣ x :=
-    Ideal.mem_span_singleton.1 (Ideal.Quotient.eq_zero_iff_mem.1 hx)
-  have cancel (k n : ℕ) (x z : R) (h : ϖ ^ (k + n) ∣ z) (e : z = ϖ ^ k * x) : ϖ ^ n ∣ x := by
-    rw [e, pow_add] at h
-    exact (mul_dvd_mul_iff_left (pow_ne_zero _ hϖ.ne_zero)).1 h
-  have step (x y z : R) (h : ϖ ∣ z) (e : z = ϖ * x + y) : ϖ ∣ y :=
-    (dvd_add_right (dvd_mul_right ϖ x)).1 (e ▸ h)
-  by_cases h6 : ϖ ∣ a₆
-  swap
-  · refine ⟨1, one_ne_zero, by simp, fun t h ↦ (h6 ?_).elim⟩
-    exact step (ϖ ^ 2 * t ^ 3 + a₂ * ϖ * t ^ 2 + a₄ * t) a₆ _
-      ((dvd_pow_self ϖ (by norm_num : 4 ≠ 0)).trans h) (by ring)
-  obtain ⟨b, rfl⟩ := h6
-  have hG (t : R) (h : ϖ ^ 4 ∣ (ϖ * t) ^ 3 + a₂ * (ϖ * t) ^ 2 + a₄ * (ϖ * t) + ϖ * b) :
-      ϖ ∣ ϖ ^ 2 * t ^ 3 + a₂ * ϖ * t ^ 2 + a₄ * t + b :=
-    (dvd_pow_self ϖ (by norm_num : 3 ≠ 0)).trans (cancel 1 3 _ _ h (by ring))
-  by_cases h4 : ϖ ∣ a₄
-  swap
-  · refine ⟨C (Ideal.Quotient.mk _ a₄) * X + C (Ideal.Quotient.mk _ b), ?_, by compute_degree!,
-      fun t h ↦ ?_⟩
-    · intro h0
-      have := congrArg (fun q ↦ q.coeff 1) h0
-      simp only [coeff_add, coeff_C_mul, coeff_X_one, coeff_C, coeff_zero] at this
-      exact h4 (hm' _ (by simpa using this))
-    · simpa [IsRoot.def, map_add, map_mul, map_pow] using
-        hm _ (step (ϖ * t ^ 3 + a₂ * t ^ 2) (a₄ * t + b) _ (hG t h) (by ring))
-  obtain ⟨c, rfl⟩ := h4
-  by_cases hb : ϖ ∣ b
-  swap
-  · refine ⟨1, one_ne_zero, by simp, fun t h ↦ (hb ?_).elim⟩
-    exact step (ϖ * t ^ 3 + a₂ * t ^ 2 + c * t) b _ (hG t h) (by ring)
-  obtain ⟨d, rfl⟩ := hb
-  have hH (t : R) (h : ϖ ^ 4 ∣ (ϖ * t) ^ 3 + a₂ * (ϖ * t) ^ 2 + ϖ * c * (ϖ * t) + ϖ * (ϖ * d)) :
-      ϖ ^ 2 ∣ ϖ * t ^ 3 + a₂ * t ^ 2 + c * t + d := cancel 2 2 _ _ h (by ring)
-  have hH1 (t : R) (h : ϖ ^ 4 ∣ (ϖ * t) ^ 3 + a₂ * (ϖ * t) ^ 2 + ϖ * c * (ϖ * t) +
-      ϖ * (ϖ * d)) : ϖ ∣ ϖ * t ^ 3 + a₂ * t ^ 2 + c * t + d :=
-    (dvd_pow_self ϖ (by norm_num : 2 ≠ 0)).trans (hH t h)
-  by_cases h2 : ϖ ∣ a₂
-  swap
-  · refine ⟨C (Ideal.Quotient.mk _ a₂) * X ^ 2 + C (Ideal.Quotient.mk _ c) * X +
-      C (Ideal.Quotient.mk _ d), ?_, by compute_degree!, fun t h ↦ ?_⟩
-    · intro h0
-      have := congrArg (fun q ↦ q.coeff 2) h0
-      simp only [coeff_add, coeff_C_mul, coeff_X_pow, coeff_X, coeff_C, coeff_zero] at this
-      exact h2 (hm' _ (by simpa using this))
-    · have := hm _ (step (t ^ 3) (a₂ * t ^ 2 + c * t + d) _ (hH1 t h) (by ring))
-      rw [map_add, map_add, map_mul, map_mul, map_pow] at this
-      simpa [IsRoot.def] using this
-  obtain ⟨e, rfl⟩ := h2
-  by_cases hc : ϖ ∣ c
-  swap
-  · refine ⟨C (Ideal.Quotient.mk _ c) * X + C (Ideal.Quotient.mk _ d), ?_, by compute_degree!,
-      fun t h ↦ ?_⟩
-    · intro h0
-      have := congrArg (fun q ↦ q.coeff 1) h0
-      simp only [coeff_add, coeff_C_mul, coeff_X_one, coeff_C, coeff_zero] at this
-      exact hc (hm' _ (by simpa using this))
-    · simpa [IsRoot.def, map_add, map_mul, map_pow] using
-        hm _ (step (t ^ 3 + e * t ^ 2) (c * t + d) _ (hH1 t h) (by ring))
-  obtain ⟨f, rfl⟩ := hc
-  by_cases hd : ϖ ∣ d
-  swap
-  · refine ⟨1, one_ne_zero, by simp, fun t h ↦ (hd ?_).elim⟩
-    exact step (t ^ 3 + e * t ^ 2 + f * t) d _ (hH1 t h) (by ring)
-  obtain ⟨g, rfl⟩ := hd
-  have hmon : (X ^ 3 + C (Ideal.Quotient.mk (Ideal.span {ϖ}) e) * X ^ 2 +
-      C (Ideal.Quotient.mk (Ideal.span {ϖ}) f) * X +
-      C (Ideal.Quotient.mk (Ideal.span {ϖ}) g)).Monic := by monicity!
-  refine ⟨_, hmon.ne_zero, by compute_degree!, fun t h ↦ ?_⟩
-  have h1 : ϖ ∣ t ^ 3 + e * t ^ 2 + f * t + g := by
-    simpa using cancel 1 1 (t ^ 3 + e * t ^ 2 + f * t + g)
-      (ϖ * t ^ 3 + ϖ * e * t ^ 2 + ϖ * f * t + ϖ * g) (hH t h) (by ring)
-  simpa [IsRoot.def] using hm _ h1
-
 /-- **The residue cubic has at most three roots** when `ϖ` is prime. On the normal form of Step 6
 these are the roots of the monic cubic of `mem_tateCubicRoots_iff`. -/
 theorem natCard_tateCubicRoots_le (hϖ : Prime ϖ) : Nat.card (W.tateCubicRoots ϖ) ≤ 3 := by
   classical
   have : (Ideal.span {ϖ}).IsPrime := (Ideal.span_singleton_prime hϖ.ne_zero).2 hϖ
-  obtain ⟨p, hp, hdeg, hroot⟩ := exists_poly_of_tateCubic hϖ W.a₂ W.a₄ W.a₆
+  obtain ⟨p, hp, hdeg, hroot⟩ := Ideal.exists_poly_isRoot_mk_of_pow_four_dvd_cubic hϖ W.a₂ W.a₄ W.a₆
   have hsub : W.tateCubicRoots ϖ ⊆ ↑p.roots.toFinset := by
     rintro _ ⟨t, rfl, h⟩
     rw [Finset.mem_coe, Multiset.mem_toFinset, mem_roots hp]
