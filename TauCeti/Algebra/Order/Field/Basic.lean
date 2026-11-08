@@ -37,7 +37,8 @@ It also records a perturbation bound for quotients, `|x / a - y / b| ≤ 2 (e + 
 `(1 - δ) b ≤ a ≤ b`, `δ ≤ 1 / 2` and `|x - y| ≤ e`, the comparison
 `2 t / (t² + ρ²) ≤ (2 t / r) (2 r / (r² + ρ²))` for `0 < t`, `0 < r ≤ ρ`, which compares the
 profiles `2 t / (t² + ρ²)` of two scales `t` and `r` outside the radius `r`, and the clearing
-bound `a * b ≤ 1` from `a ≤ (1 + b)⁻¹` for `0 ≤ b`.
+bound `a * b ≤ 1` from `a ≤ (1 + b)⁻¹` for `0 ≤ b`, and the arithmetic of a ball estimate: from
+`r² G ≤ C₀ ((2r)²/λ · Lf + T · Lu)` the bound `G ≤ C₀ (4/λ + T/r²)(F + U)` for `Lf ≤ F`, `Lu ≤ U`.
 
 ## Main results
 
@@ -54,6 +55,8 @@ bound `a * b ≤ 1` from `a ≤ (1 + b)⁻¹` for `0 ≤ b`.
 * `TauCeti.two_mul_div_add_sq_le_mul`: `2 t / (t² + ρ²) ≤ (2 t / r) (2 r / (r² + ρ²))` for
   `0 < t` and `0 < r ≤ ρ`.
 * `TauCeti.mul_le_one_of_le_inv_one_add`: `a * b ≤ 1` for `0 ≤ b` and `a ≤ (1 + b)⁻¹`.
+* `TauCeti.le_mul_four_div_add_div_sq_mul_add_of_sq_mul_le`: from
+  `r² G ≤ C₀ ((2r)²/λ · Lf + T · Lu)` to `G ≤ C₀ (4/λ + T/r²)(F + U)`.
 -/
 
 public section
@@ -164,6 +167,28 @@ theorem mul_le_one_of_le_inv_one_add {α : Type*} [Semifield α] [LinearOrder α
   refine (mul_le_mul_of_nonneg_right ha hb).trans ?_
   rw [inv_mul_eq_div, div_le_one (add_pos_of_pos_of_nonneg zero_lt_one hb)]
   exact le_add_of_nonneg_left zero_le_one
+
+/-- Dividing `r² G ≤ C₀ ((2r)²/λ · Lf + T · Lu)` by `r²` and
+enlarging the norms `Lf ≤ F`, `Lu ≤ U` gives `G ≤ C₀ (4/λ + T/r²)(F + U)`. -/
+theorem le_mul_four_div_add_div_sq_mul_add_of_sq_mul_le {α : Type*} [Field α] [LinearOrder α]
+    [IsStrictOrderedRing α] {C₀ lam r T F U G Lf Lu : α} (hC₀ : 0 ≤ C₀) (hl0 : 0 < lam)
+    (hr0 : 0 < r) (hT0 : 0 ≤ T) (hF0 : 0 ≤ F) (hU0 : 0 ≤ U) (hLf : Lf ≤ F) (hLu : Lu ≤ U)
+    (key : r ^ 2 * G ≤ C₀ * ((2 * r) ^ 2 / lam * Lf + T * Lu)) :
+    G ≤ C₀ * (4 / lam + T / r ^ 2) * (F + U) := by
+  have hbound : r ^ 2 * G ≤ r ^ 2 * (C₀ * (4 / lam + T / r ^ 2) * (F + U)) := by
+    refine key.trans ?_
+    have hsplit : r ^ 2 * (C₀ * (4 / lam + T / r ^ 2) * (F + U)) =
+        C₀ * ((2 * r) ^ 2 / lam * F + T * U + (r ^ 2 * (4 / lam) * U + T * F)) := by
+      field_simp
+      ring
+    rw [hsplit]
+    refine mul_le_mul_of_nonneg_left ?_ hC₀
+    have h1 : (2 * r) ^ 2 / lam * Lf ≤ (2 * r) ^ 2 / lam * F := by gcongr
+    have h2 : T * Lu ≤ T * U := mul_le_mul_of_nonneg_left hLu hT0
+    have h3 : 0 ≤ r ^ 2 * (4 / lam) * U + T * F :=
+      add_nonneg (by positivity) (mul_nonneg hT0 hF0)
+    linarith
+  exact le_of_mul_le_mul_left hbound (by positivity)
 
 end TauCeti
 

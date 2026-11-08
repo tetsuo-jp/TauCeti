@@ -7,6 +7,8 @@ module
 
 public import TauCeti.Analysis.PDE.Regularity.Hessian.Interior
 import Mathlib.MeasureTheory.Function.LpSeminorm.LpNorm
+import TauCeti.Algebra.Order.Field.Basic
+import TauCeti.LinearAlgebra.Matrix.AbsoluteValue
 import TauCeti.MeasureTheory.Function.LpSeminorm.AddMeasure
 import TauCeti.Topology.Instances.Matrix
 
@@ -66,39 +68,6 @@ open scoped ENNReal NNReal InnerProductSpace Topology
 
 variable {n : ℕ} {p : ℝ≥0∞} [Fact (1 ≤ p)]
 
-/-- If every entry of `a` is within `ε` of the corresponding entry of `A`, then `|aᵢⱼ|` is at most
-the sum of the absolute values of the entries of `A` plus `ε`. -/
-theorem abs_le_sum_abs_add {m k : Type*} [Fintype m] [Fintype k] {A : Matrix m k ℝ} {i : m} {j : k}
-    {x ε : ℝ} (h : |x - A i j| ≤ ε) : |x| ≤ ∑ i', ∑ j', |A i' j'| + ε := by
-  have h1 : |A i j| ≤ ∑ i', ∑ j', |A i' j'| :=
-    (Finset.single_le_sum (f := fun j' => |A i j'|) (fun _ _ => abs_nonneg _)
-      (Finset.mem_univ j)).trans
-      (Finset.single_le_sum (f := fun i' => ∑ j', |A i' j'|)
-        (fun _ _ => Finset.sum_nonneg fun _ _ => abs_nonneg _) (Finset.mem_univ i))
-  have h2 := abs_sub_abs_le_abs_sub x (A i j)
-  linarith
-
-/-- The arithmetic of the ball estimate: dividing `r² G ≤ C₀ ((2r)²/λ · Lf + T · Lu)` by `r²` and
-enlarging the norms `Lf ≤ F`, `Lu ≤ U` gives `G ≤ C₀ (4/λ + T/r²)(F + U)`. -/
-private theorem interior_bound_of_le_mul_add {C₀ : ℝ≥0} {lam r T F U G Lf Lu : ℝ} (hl0 : 0 < lam)
-    (hr0 : 0 < r) (hT0 : 0 ≤ T) (hF0 : 0 ≤ F) (hU0 : 0 ≤ U) (hLf : Lf ≤ F) (hLu : Lu ≤ U)
-    (key : r ^ 2 * G ≤ C₀ * ((2 * r) ^ 2 / lam * Lf + T * Lu)) :
-    G ≤ C₀ * (4 / lam + T / r ^ 2) * (F + U) := by
-  have hbound : r ^ 2 * G ≤ r ^ 2 * (C₀ * (4 / lam + T / r ^ 2) * (F + U)) := by
-    refine key.trans ?_
-    have hsplit : r ^ 2 * (C₀ * (4 / lam + T / r ^ 2) * (F + U)) =
-        C₀ * ((2 * r) ^ 2 / lam * F + T * U + (r ^ 2 * (4 / lam) * U + T * F)) := by
-      field_simp
-      ring
-    rw [hsplit]
-    refine mul_le_mul_of_nonneg_left ?_ C₀.2
-    have h1 : (2 * r) ^ 2 / lam * Lf ≤ (2 * r) ^ 2 / lam * F := by gcongr
-    have h2 : T * Lu ≤ T * U := mul_le_mul_of_nonneg_left hLu hT0
-    have h3 : 0 ≤ r ^ 2 * (4 / lam) * U + T * F :=
-      add_nonneg (by positivity) (mul_nonneg hT0 hF0)
-    linarith
-  exact le_of_mul_le_mul_left hbound (by positivity)
-
 /-- **The ball estimate with norms on `Ω`.** On a ball `B(x₀, 2r) ⊆ Ω` on which `a` oscillates
 around an elliptic matrix `A` by at most `δ λ`, the interior estimate on balls bounds `D²u` on
 `B(x₀, r)` by the `Lᵖ(Ω)` norms of `f` and `u`, with the coefficient bound
@@ -142,7 +111,7 @@ private theorem exists_lpNorm_iteratedGradient_ball_le_mul_norm_add_norm (hn : 0
       ∀ᵐ x, x ∈ ball x₀ (2 * r) → P x := fun hP =>
     ((ae_restrict_iff' Omega.isOpen.measurableSet).1 hP).mono fun x hx hxb => hx (hR hxb)
   have haΛ : ∀ y ∈ ball x₀ (2 * r), ∀ i j, |a y i j| ≤ Λ := fun y hy i j =>
-    abs_le_sum_abs_add (hosc y hy i j)
+    Matrix.abs_le_sum_abs_add (hosc y hy i j)
   -- The inner radius `r` is below the outer radius `2 r`, with gap exactly `r`.
   have hlt : r < 2 * r := by linarith
   have hgap : 2 * r - r = r := by ring
@@ -152,7 +121,8 @@ private theorem exists_lpNorm_iteratedGradient_ball_le_mul_norm_add_norm (hn : 0
     (hc.mono_measure (Measure.restrict_mono hR le_rfl)) (hball_ae hcγ) u f
     (ae_restrict_of_ae_restrict_of_subset hR heq)
   rw [hgap] at key
-  exact interior_bound_of_le_mul_add hl0 hr0 hT0 (norm_nonneg f) (norm_nonneg (Wkp.value 2 u))
+  exact le_mul_four_div_add_div_sq_mul_add_of_sq_mul_le C₀.2 hl0 hr0 hT0 (norm_nonneg f)
+    (norm_nonneg (Wkp.value 2 u))
     (lpNorm_mono_measure (Lp.memLp f) (Measure.restrict_mono hR le_rfl))
     (lpNorm_mono_measure (Lp.memLp _) (Measure.restrict_mono hR le_rfl)) key
 

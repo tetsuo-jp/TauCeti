@@ -9,6 +9,7 @@ public import Mathlib.Algebra.Order.AbsoluteValue.Int
 public import Mathlib.Algebra.Order.Ring.IsNonarchimedean
 public import Mathlib.LinearAlgebra.Matrix.Determinant.Basic
 import Mathlib.Algebra.Order.BigOperators.Ring.Finset
+import Mathlib.Tactic.Linarith
 
 /-!
 # The `ℓ¹` and ultrametric forms of Hadamard's determinant bound
@@ -38,6 +39,8 @@ the bound on the regulator.
 * `Matrix.abv_det_le_prod_of_le` and `Matrix.abv_det_le_prod_of_le'`: for nonarchimedean `abv`,
   entrywise row bounds `b i` or column bounds `b j` give `abv A.det ≤ ∏ i, b i` and
   `abv A.det ≤ ∏ j, b j`.
+* `Matrix.abs_le_sum_abs_add`: a number within `ε` of an entry of `A` has absolute
+  value at most the sum of the absolute values of the entries of `A` plus `ε`.
 -/
 
 public section
@@ -101,5 +104,17 @@ theorem abv_det_le_prod_of_le (A : Matrix n n R) {abv : AbsoluteValue R S}
     abv A.det ≤ ∏ i, b i := by
   simpa only [det_transpose, transpose_apply] using
     abv_det_le_prod_of_le' Aᵀ habv fun i j => hA j i
+
+/-- If `x` is within `ε` of an entry of `A`, then `|x|` is at most the sum of the absolute values
+of the entries of `A` plus `ε`. -/
+theorem abs_le_sum_abs_add {m k : Type*} [Fintype m] [Fintype k] {A : Matrix m k S}
+    {i : m} {j : k} {x ε : S} (h : |x - A i j| ≤ ε) : |x| ≤ ∑ i', ∑ j', |A i' j'| + ε := by
+  have h1 : |A i j| ≤ ∑ i', ∑ j', |A i' j'| :=
+    (Finset.single_le_sum (f := fun j' => |A i j'|) (fun _ _ => abs_nonneg _)
+      (Finset.mem_univ j)).trans
+      (Finset.single_le_sum (f := fun i' => ∑ j', |A i' j'|)
+        (fun _ _ => Finset.sum_nonneg fun _ _ => abs_nonneg _) (Finset.mem_univ i))
+  have h2 := abs_sub_abs_le_abs_sub x (A i j)
+  linarith
 
 end Matrix
