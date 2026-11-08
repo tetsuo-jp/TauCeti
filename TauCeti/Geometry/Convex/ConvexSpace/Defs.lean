@@ -93,25 +93,31 @@ theorem weights_map_succAbove_of_eq {n : ℕ} {j k : Fin (n + 1)} {i : Fin n}
     (x.map j.succAbove).weights k = x.weights i :=
   h ▸ weights_map_apply_of_injective Fin.succAbove_right_injective x i
 
+omit [IsStrictOrderedRing R] in
 /-- The facet of the standard simplex on `Fin (n + 1)` opposite its last vertex, the points with
 vanishing last weight, is the standard simplex on `Fin n` with a zero last weight appended. -/
 theorem range_snoc_weights_zero (n : ℕ) :
     (Set.range fun s : StdSimplex R (Fin n) => (Fin.snoc ⇑s.weights 0 : Fin (n + 1) → R)) =
       {y ∈ Set.range fun s : StdSimplex R (Fin (n + 1)) => ⇑s.weights | y (Fin.last n) = 0} := by
-  -- Appending a zero weight is the face map onto the facet opposite the last vertex.
-  have hsnoc (s : StdSimplex R (Fin n)) :
-      ⇑(s.map (Fin.last n).succAbove).weights = Fin.snoc ⇑s.weights 0 := by
-    funext k
-    induction k using Fin.lastCases with
-    | last => rw [weights_map_succAbove_self, Fin.snoc_last]
-    | cast j => rw [weights_map_succAbove_of_eq (Fin.succAbove_last_apply j), Fin.snoc_castSucc]
   ext y
   constructor
   · rintro ⟨s, rfl⟩
-    exact ⟨⟨_, hsnoc s⟩, by simp⟩
+    refine ⟨⟨⟨Finsupp.equivFunOnFinite.symm (Fin.snoc ⇑s.weights 0), ?_, ?_⟩, ?_⟩, by simp⟩
+    · intro k
+      induction k using Fin.lastCases with
+      | last => simp
+      | cast j => simp
+    · simp [Finsupp.sum_fintype, Fin.sum_univ_castSucc]
+    · simp
   · rintro ⟨⟨t, rfl⟩, ht⟩
-    obtain ⟨s, rfl⟩ := (mem_range_map_succAbove_iff _ t).2 ht
-    exact ⟨s, (hsnoc s).symm⟩
+    refine ⟨⟨Finsupp.equivFunOnFinite.symm (Fin.init ⇑t.weights), ?_, ?_⟩, ?_⟩
+    · intro k
+      exact t.nonneg k.castSucc
+    · have := t.total
+      rw [Finsupp.sum_fintype _ _ fun _ => rfl, Fin.sum_univ_castSucc,
+        show t.weights (Fin.last n) = 0 from ht, add_zero] at this
+      simpa [Finsupp.sum_fintype, Fin.init] using this
+    · simp [← ht]
 
 /-- A function on a standard simplex which takes the value `z` on every facet takes the value `z`
 at every point with a vanishing weight. -/
