@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Analysis.Normed.Group.Continuity
+public import Mathlib.Analysis.Normed.Group.Real
 public import Mathlib.Topology.Instances.ENNReal.Lemmas
 
 /-!
@@ -21,6 +22,8 @@ subtraction-based estimates are unavailable, and the superadditivity of the lowe
   constant vanishes as `h → 0`.
 * `TauCeti.tendsto_of_le_add_of_le_add`: a family within `wᵢ` of `b` from both sides converges
   to `b` when `wᵢ → 0`.
+* `TauCeti.tendsto_ofReal_div_mul_add_mul_enorm_sub`: the bounds `K / m n * T + M * ‖s n - a‖`
+  converge to `K / m₀ * T` when `m n → m₀ > 0` and `s n → a`, for finite `M`.
 * `ENNReal.le_liminf_add` and `ENNReal.sum_liminf_le_liminf_sum`: the sum of the lower limits of
   finitely many `ℝ≥0∞`-valued families is at most the lower limit of their sum.
 * `ENNReal.le_add_of_forall_one_lt_le_add_mul`: if `a ≤ b + t c` for every `t > 1`, then
@@ -95,5 +98,22 @@ theorem _root_.ENNReal.le_add_of_forall_one_lt_le_add_mul {a b c : ℝ≥0∞}
   have hlim : Filter.Tendsto (fun t : ℝ≥0 => b + t * c) (𝓝[>] 1) (𝓝 (b + c)) := by
     simpa using tendsto_const_nhds.add (ENNReal.Tendsto.mul_const h1 (Or.inr hc))
   exact ge_of_tendsto hlim (eventually_nhdsWithin_of_forall h)
+
+/-- The bounds `K / m n * T + M * ‖s n - a‖` converge to `K / m₀ * T` when `m n → m₀ > 0` and
+`s n → a`, for finite `M`. -/
+theorem tendsto_ofReal_div_mul_add_mul_enorm_sub {K a m₀ : ℝ} {m s : ℕ → ℝ}
+    {T M : ℝ≥0∞} (hK : 0 ≤ K) (hm₀ : 0 < m₀) (hm : Filter.Tendsto m Filter.atTop (nhds m₀))
+    (hs : Filter.Tendsto s Filter.atTop (nhds a)) (hM : M ≠ ∞) :
+    Filter.Tendsto (fun n => ENNReal.ofReal (K / m n) * T + M * ‖s n - a‖ₑ) Filter.atTop
+      (nhds (ENNReal.ofReal (K / m₀) * T + M * 0)) := by
+  refine Filter.Tendsto.add ?_ (ENNReal.Tendsto.const_mul ?_ (Or.inr hM))
+  · rcases eq_or_ne K 0 with hK₀ | hK₀
+    · simp [hK₀]
+    refine ENNReal.Tendsto.mul_const
+      (ENNReal.tendsto_ofReal (tendsto_const_nhds.div hm hm₀.ne')) (Or.inl ?_)
+    exact (ENNReal.ofReal_pos.2 (div_pos (lt_of_le_of_ne hK hK₀.symm) hm₀)).ne'
+  · have h0 : Filter.Tendsto (fun n ↦ s n - a) Filter.atTop (nhds 0) := by
+      simpa using hs.sub_const a
+    simpa [Function.comp_def] using (continuous_enorm.tendsto (0 : ℝ)).comp h0
 
 end TauCeti
