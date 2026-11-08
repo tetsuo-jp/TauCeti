@@ -293,7 +293,7 @@ theorem exists_forall_windingNumber_eq_add_one_of_eqOn_segment {Γ : ℝ → ℂ
         (1 : ℂ) < 1 :=
     h_tend (Metric.ball_mem_nhds (1 : ℂ) one_pos)
   obtain ⟨h, hh_near, hh_pos, hh_lt⟩ := (h_near.and h_small).exists
-  have h_jump := windingNumber_eq_add_one_of_dist_lt hΓ hclosed
+  have h_jump := windingNumber_eq_add_one_of_dist_lt hΓ.absolutelyContinuousOnInterval hclosed
     (h_off_add h hh_pos hh_lt) (h_off_sub h hh_pos hh_lt) hh_near
   intro w₁ hw₁ w₂ hw₂ h₁ h₂
   have hmem_add : v * (s + h * I) + z₀ ∈ ball (v * s + z₀) r := by
