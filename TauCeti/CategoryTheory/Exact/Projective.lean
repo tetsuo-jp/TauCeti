@@ -553,18 +553,23 @@ section Resolutions
 
 variable {P : ObjectProperty C}
 
-/-- **A property consisting of projectives is extension closed**, as soon as it is replete and
-closed under binary biproducts: a conflation whose third term is projective splits, so its middle
-term is the biproduct of the two outer ones.
+/-- **A property consisting of projectives is extension closed**, as soon as it is closed under
+binary products: a conflation whose third term is projective splits, so its middle term is the
+biproduct of the two outer ones.
 
 Together with `TauCeti.ExactStructure.fullSubcategory` this equips the objects satisfying `P`
 with an induced exact structure — necessarily the split one, by
 `TauCeti.ExactStructure.fullSubcategory_eq_split`. -/
-theorem isExtensionClosed_of_le_isProjective [P.IsClosedUnderIsomorphisms]
-    [P.IsClosedUnderBinaryProducts] (hP : P ≤ E.isProjective) : E.IsExtensionClosed P where
-  prop_X₂ hS h₁ h₃ :=
-    P.prop_of_iso (E.splittingOfProjective hS (hP _ h₃)).isoBinaryBiproduct.symm
-      (P.prop_biprod_of_isClosedUnderBinaryProducts h₁ h₃)
+theorem isExtensionClosed_of_le_isProjective [P.IsClosedUnderBinaryProducts]
+    (hP : P ≤ E.isProjective) : E.IsExtensionClosed P where
+  prop_X₂ {S} hS h₁ h₃ := by
+    have sp := E.splittingOfProjective hS (hP _ h₃)
+    exact P.prop_of_isLimit_binaryFan (B := BinaryFan.mk sp.r S.g)
+      (IsLimit.ofIsoLimit (BinaryBiproduct.isLimit _ _)
+        (Cone.ext sp.isoBinaryBiproduct.symm
+          (by
+            rintro ⟨⟨⟩ | ⟨⟩⟩ <;> apply biprod.hom_ext' <;>
+              simp [ShortComplex.Splitting.isoBinaryBiproduct]))) h₁ h₃
 
 /-- A property containing a zero object and closed under binary products is automatically
 replete, by `CategoryTheory.ObjectProperty.isClosedUnderIsomorphisms_of_containsZero`; so the
