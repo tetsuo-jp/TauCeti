@@ -54,6 +54,7 @@ bound `a * b ≤ 1` from `a ≤ (1 + b)⁻¹` for `0 ≤ b`.
 * `TauCeti.two_mul_div_add_sq_le_mul`: `2 t / (t² + ρ²) ≤ (2 t / r) (2 r / (r² + ρ²))` for
   `0 < t` and `0 < r ≤ ρ`.
 * `TauCeti.mul_le_one_of_le_inv_one_add`: `a * b ≤ 1` for `0 ≤ b` and `a ≤ (1 + b)⁻¹`.
+* `TauCeti.le_two_mul_of_le_add_mul`: `J ≤ 2 * Y` from `J ≤ Y + X * J`, `X ≤ 1 / 2` and `0 ≤ J`.
 -/
 
 public section
@@ -164,6 +165,12 @@ theorem mul_le_one_of_le_inv_one_add {α : Type*} [Semifield α] [LinearOrder α
   refine (mul_le_mul_of_nonneg_right ha hb).trans ?_
   rw [inv_mul_eq_div, div_le_one (add_pos_of_pos_of_nonneg zero_lt_one hb)]
   exact le_add_of_nonneg_left zero_le_one
+
+/-- Absorbing the term `X * J` with `X ≤ 1 / 2` into the left side: `J ≤ Y + X * J` gives
+`J ≤ 2 * Y` for `0 ≤ J`. -/
+theorem le_two_mul_of_le_add_mul {α : Type*} [Field α] [LinearOrder α] [IsStrictOrderedRing α]
+    {J X Y : α} (hJ : 0 ≤ J) (hX : X ≤ 1 / 2) (h : J ≤ Y + X * J) : J ≤ 2 * Y := by
+  nlinarith [mul_le_mul_of_nonneg_right hX hJ]
 
 end TauCeti
 
