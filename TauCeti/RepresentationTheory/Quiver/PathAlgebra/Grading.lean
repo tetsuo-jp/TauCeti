@@ -9,6 +9,7 @@ public import Mathlib.Algebra.Algebra.Operations
 public import Mathlib.Algebra.Module.Equiv.Opposite
 public import Mathlib.LinearAlgebra.Basis.Basic
 public import Mathlib.RingTheory.GradedAlgebra.Basic
+public import TauCeti.Algebra.DirectSum.Internal
 public import TauCeti.Combinatorics.Quiver.PathWeight
 public import TauCeti.Algebra.Module.GradedModule.Internal
 public import TauCeti.LinearAlgebra.Graded.ExtendByZero
@@ -102,7 +103,7 @@ public section
 
 namespace TauCeti
 
-open DirectSum
+open _root_.DirectSum
 
 universe u v w
 
@@ -407,10 +408,15 @@ noncomputable instance gradeBy.gradedAlgebra : GradedAlgebra (gradeBy k wt) :=
         DirectSum.coeAlgHom_of, AlgHom.coe_id, id_eq])
     fun _ f => decomposeAlgHom_of_mem k wt f.2
 
-/-- **The path algebra is the internal direct sum of its weight pieces**: the direct-sum graded
-algebra is compared with `kQ` itself, not with a separate graded copy. -/
-theorem isInternal_gradeBy : DirectSum.IsInternal (gradeBy k wt) :=
-  DirectSum.Decomposition.isInternal _
+omit [Finite Q] in
+/-- **The path algebra is the internal direct sum of its weight pieces**: the pieces are the spans
+of the fibers of the weight map on the path basis, so this holds for every quiver. -/
+theorem isInternal_gradeBy : DirectSum.IsInternal (gradeBy k wt) := by
+  have h := DirectSum.isInternal_span_image_fiber (pathAlgebraBasis k Q)
+    fun x : Quiver.TotalPath Q => x.2.2.addWeight wt
+  convert h using 1
+  funext m
+  exact gradeBy_eq_span_image_basis k wt m
 
 /-- The decomposition sends a basis path to the summand its weight names. -/
 @[simp]
@@ -665,10 +671,11 @@ with the span of the paths of length `n` in degree `n`. It is the grading by the
 noncomputable instance gradedAlgebra : GradedAlgebra (grade k Q) :=
   gradeBy_const_one k Q ▸ gradeBy.gradedAlgebra k (Q := Q) fun _ => 1
 
-/-- **The path algebra is the internal direct sum of its graded pieces**: the direct-sum graded
-algebra is compared with `kQ` itself, not with a separate graded copy. -/
+omit [Finite Q] in
+/-- **The path algebra is the internal direct sum of its graded pieces**: the case of the constant
+weight `1` of `TauCeti.PathAlgebra.isInternal_gradeBy`. -/
 theorem isInternal_grade : DirectSum.IsInternal (grade k Q) :=
-  DirectSum.Decomposition.isInternal _
+  isInternal_gradeBy k (Q := Q) fun _ => 1
 
 /-- The decomposition sends a basis path to the summand indexed by its length. -/
 @[simp]
@@ -713,7 +720,7 @@ theorem integerGrade_zero_eq_span_range_vertexIdempotent :
   rw [← Nat.cast_zero, integerGrade_ofNat, grade_zero_eq_span_range_vertexIdempotent]
 
 /-- The integer-indexed path-length pieces form an internal direct sum. -/
-theorem isInternal_integerGrade [Finite Q] : DirectSum.IsInternal (integerGrade k Q) :=
+theorem isInternal_integerGrade : DirectSum.IsInternal (integerGrade k Q) :=
   Graded.isInternal_extendByZero (isInternal_grade k Q)
 
 /-- The path algebra is integer graded by path length, with zero pieces in negative degrees. -/
@@ -755,7 +762,7 @@ section OppositeGradedAlgebra
 variable (k : Type w) (Q : Type u) [CommRing k] [Quiver.{v} Q]
 
 /-- The opposite path-length pieces form an internal direct sum. -/
-theorem isInternal_opGrade [Finite Q] : DirectSum.IsInternal (opGrade k Q) := by
+theorem isInternal_opGrade : DirectSum.IsInternal (opGrade k Q) := by
   apply DirectSum.isInternal_submodule_of_iSupIndep_of_iSup_eq_top
   · exact LinearMap.iSupIndep_map _ (MulOpposite.opLinearEquiv k).injective
       (isInternal_grade k Q).submodule_iSupIndep

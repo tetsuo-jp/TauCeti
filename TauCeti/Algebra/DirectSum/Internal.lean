@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Algebra.DirectSum.Decomposition
 public import Mathlib.Algebra.GradedMulAction
+public import Mathlib.LinearAlgebra.Basis.Basic
 
 /-!
 # Internal direct sums from explicit equivalences
@@ -47,6 +48,9 @@ Finally, the external direct sum `⨁ i, M i` of a family of `R`-modules is the 
 of its summands `DirectSum.summand R M i`, the ranges of the inclusions `DirectSum.lof R ι M i`
 (`DirectSum.isInternal_summand`). The resulting decomposition `DirectSum.instDecompositionSummand`
 has `i`-th component `DirectSum.of M i (x i)` (`DirectSum.coe_decompose_summand`).
+
+Over any semiring, the spans of the basis vectors in the fibers of a map on the index set of a basis
+form an internal direct sum (`DirectSum.isInternal_span_image_fiber`).
 -/
 
 public section
@@ -549,5 +553,38 @@ theorem coe_decompose_summand (x : ⨁ i, M i) (i : ι) :
   | add x y hx hy => simp [hx, hy]
 
 end Module
+
+
+/-- **A basis split along the fibers of a map gives an internal direct sum**: if `b` is a basis of
+`M` and `w : ι → κ` is any map of the index type, then the spans of the basis vectors in the fibers
+of `w` form an internal direct sum decomposition of `M`. -/
+theorem isInternal_span_image_fiber {R ι κ M : Type*} [Semiring R] [AddCommMonoid M]
+    [Module R M] [DecidableEq κ] (b : Module.Basis ι R M) (w : ι → κ) :
+    DirectSum.IsInternal fun c : κ => Submodule.span R (b '' {i | w i = c}) := by
+  let A : κ → Submodule R M := fun c => Submodule.span R (b '' {i | w i = c})
+  have hsupp : ∀ c (a : M), a ∈ A c → ∀ i, w i ≠ c → b.repr a i = 0 := fun c a ha i hi => by
+    by_contra h
+    exact hi ((Module.Basis.mem_span_image b).1 ha (Finsupp.mem_support_iff.2 h))
+  have key : ∀ (x : ⨁ c, A c) (c : κ) (i : ι), w i = c →
+      b.repr (DirectSum.coeLinearMap A x) i = b.repr (x c : M) i := by
+    intro x c i hi
+    induction x using DirectSum.induction_on with
+    | zero => simp
+    | of c' a =>
+      rw [DirectSum.coeLinearMap_of]
+      by_cases h : c' = c
+      · subst h; simp
+      · rw [DirectSum.of_eq_of_ne _ _ _ (Ne.symm h), hsupp c' a a.2 i fun e => h (e.symm.trans hi)]
+        simp
+    | add x y hx hy => simp [hx, hy]
+  change Function.Bijective (DirectSum.coeLinearMap A)
+  refine ⟨fun x y hxy => ?_, ?_⟩
+  · refine DirectSum.ext fun c => Subtype.ext (b.repr.injective (Finsupp.ext fun i => ?_))
+    by_cases hi : w i = c
+    · rw [← key x c i hi, ← key y c i hi, hxy]
+    · rw [hsupp c _ (x c).2 i hi, hsupp c _ (y c).2 i hi]
+  · rw [← LinearMap.range_eq_top, eq_top_iff, ← b.span_eq, Submodule.span_le]
+    rintro _ ⟨i, rfl⟩
+    exact ⟨DirectSum.of (fun c => A c) (w i) ⟨b i, Submodule.subset_span ⟨i, rfl, rfl⟩⟩, by simp⟩
 
 end DirectSum
