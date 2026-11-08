@@ -219,8 +219,8 @@ theorem offNodeChartFst_bijective {p : E × ℂ × ℂ}
     (hs : eval 𝓘(ℂ, E) E p.1 s = p.2.1 * p.2.2) : Bijective (offNodeChartFst p s) := by
   obtain ⟨S, -, hS⟩ := exists_toFilterGerm_eq p.1 s
   obtain ⟨hSa, hSp⟩ := contDiffAt_and_eq_of_toFilterGerm_eq hs (hS _ le_rfl)
-  obtain ⟨hσ, hσp⟩ := graph_of_fst_ne_zero hSa hSp hx
-  exact quotientMk_comp_stalkPrecomp_bijective _ hσ hσp (Eventually.of_forall fun _ ↦ rfl) _
+  obtain ⟨hσ, -⟩ := graph_of_fst_ne_zero hSa hSp hx
+  exact quotientMk_comp_stalkPrecomp_bijective _ hσ (Eventually.of_forall fun _ ↦ rfl) _
     (mem_span_smoothingEquation_iff_of_fst_ne_zero hx hs (hS _ le_rfl))
 
 /-- **Product chart where `x ≠ 0`**, as a ring isomorphism between the holomorphic germs on
@@ -288,8 +288,8 @@ theorem offNodeChartSnd_bijective {p : E × ℂ × ℂ}
     (hs : eval 𝓘(ℂ, E) E p.1 s = p.2.1 * p.2.2) : Bijective (offNodeChartSnd p s) := by
   obtain ⟨S, -, hS⟩ := exists_toFilterGerm_eq p.1 s
   obtain ⟨hSa, hSp⟩ := contDiffAt_and_eq_of_toFilterGerm_eq hs (hS _ le_rfl)
-  obtain ⟨hσ, hσp⟩ := graph_of_snd_ne_zero hSa hSp hy
-  exact quotientMk_comp_stalkPrecomp_bijective _ hσ hσp (Eventually.of_forall fun _ ↦ rfl) _
+  obtain ⟨hσ, -⟩ := graph_of_snd_ne_zero hSa hSp hy
+  exact quotientMk_comp_stalkPrecomp_bijective _ hσ (Eventually.of_forall fun _ ↦ rfl) _
     (mem_span_smoothingEquation_iff_of_snd_ne_zero hy hs (hS _ le_rfl))
 
 /-- **Product chart where `y ≠ 0`**, as a ring isomorphism between the holomorphic germs on
