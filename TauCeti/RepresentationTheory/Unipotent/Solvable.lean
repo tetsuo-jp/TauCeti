@@ -28,7 +28,7 @@ submodule is `TauCeti.toMatrixAlgEquiv_extensionBasis_isUpperUnitriangular`, in
 * `Representation.isNilpotent_quotient_sub_one`: unipotent operators stay unipotent on the
   quotient by an invariant submodule.
 * `Representation.isNilpotent_sub_one_of_quotient`: an operator that is unipotent on the quotient
-  by a pointwise fixed submodule is unipotent.
+  by an invariant submodule fixed pointwise by that operator is unipotent.
 * `Representation.exists_basis_isUpperUnitriangular_of_isUnipotent`: simultaneous
   upper-unitriangularization of a unipotent monoid representation.
 * `Representation.isSolvable_of_injective_of_isUnipotent`: a group with a faithful
@@ -81,11 +81,11 @@ theorem _root_.Representation.isNilpotent_quotient_sub_one (rho : Representation
   rw [rho.quotient_sub_one_eq_mapQ p hp g]
   exact Module.End.IsNilpotent.mapQ _ hg
 
-/-- If an element acts unipotently on the quotient by a pointwise fixed submodule, then it acts
-unipotently on the whole space. -/
+/-- If an element acts unipotently on the quotient by an invariant submodule that it fixes
+pointwise, then it acts unipotently on the whole space. -/
 theorem _root_.Representation.isNilpotent_sub_one_of_quotient
-    (rho : Representation R G V) (p : Submodule R V) (hfix : ∀ z : G, ∀ y ∈ p, rho z y = y)
-    {g : G} (hn : IsNilpotent (rho.quotient p (rho.le_comap_of_fixed p hfix) g - 1)) :
+    (rho : Representation R G V) (p : Submodule R V) (hp : ∀ g, p ≤ p.comap (rho g))
+    {g : G} (hfix : ∀ y ∈ p, rho g y = y) (hn : IsNilpotent (rho.quotient p hp g - 1)) :
     IsNilpotent (rho g - 1) := by
   obtain ⟨n, hn⟩ := hn
   rw [rho.quotient_sub_one_eq_mapQ p _ g] at hn
@@ -95,9 +95,9 @@ theorem _root_.Representation.isNilpotent_sub_one_of_quotient
   have hymem : ((rho g - 1) ^ n) y ∈ p := by
     apply (Submodule.Quotient.mk_eq_zero p).mp
     have hz := LinearMap.congr_fun hn (p.mkQ y)
-    rw [← p.mapQ_pow (rho.le_comap_sub_one p (rho.le_comap_of_fixed p hfix) g) n] at hz
+    rw [← p.mapQ_pow (rho.le_comap_sub_one p hp g) n] at hz
     simpa only [Submodule.mkQ_apply, Submodule.mapQ_apply, LinearMap.zero_apply] using hz
-  rw [LinearMap.sub_apply, one_apply_eq_self, hfix g _ hymem, sub_self, LinearMap.zero_apply]
+  rw [LinearMap.sub_apply, one_apply_eq_self, hfix _ hymem, sub_self, LinearMap.zero_apply]
 
 end Quotient
 

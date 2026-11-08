@@ -143,7 +143,7 @@ private theorem _root_.Representation.isNilpotent_sub_one_of_normal_isUnipotent
           have hsum := Module.finrank_quotient_add_finrank_le (K ∙ x)
           rw [finrank_span_singleton hx, hdim] at hsum
           omega
-        exact rho.isNilpotent_sub_one_of_quotient (K ∙ x) hfix <|
+        exact rho.isNilpotent_sub_one_of_quotient (K ∙ x) (rho.le_comap_of_fixed _ hfix) (hfix g) <|
           ih _ hqdim (rho.quotient (K ∙ x) (rho.le_comap_of_fixed _ hfix))
             (fun u ↦ rho.isNilpotent_quotient_sub_one _ _ (hU u))
             (fun w ↦ rho.isNilpotent_quotient_sub_one _ _ (hW w)) rfl
