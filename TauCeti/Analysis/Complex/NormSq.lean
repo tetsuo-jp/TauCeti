@@ -33,7 +33,7 @@ the norm along upward vertical rays leaving a point of the closed upper half-pla
 * `Complex.norm_one_add_sq_div_sq_of_norm_eq`: on the circle `‖z‖ = R`, `‖1 + z² / R²‖` is
   `2 |re z| / R`.
 * `Complex.norm_le_norm_add_ofReal_mul_I`: for `0 ≤ z.im` and `0 ≤ s`, `‖z‖ ≤ ‖z + s * I‖`.
-* `Complex.half_norm_add_le_norm_add_ofReal_mul_I`: for `0 ≤ z.im` and `0 ≤ s`,
+* `Complex.norm_add_div_two_le_norm_add_ofReal_mul_I`: for `0 ≤ z.im` and `0 ≤ s`,
   `(‖z‖ + s) / 2 ≤ ‖z + s * I‖`.
 -/
 
@@ -160,7 +160,7 @@ theorem norm_le_norm_add_ofReal_mul_I {z : ℂ} (hz : 0 ≤ z.im) {s : ℝ} (hs 
 
 /-- The points of a vertical ray leaving a point `z` of the closed upper half-plane upward, at
 height `s` above `z`, are at distance at least `(‖z‖ + s) / 2` from the origin. -/
-theorem half_norm_add_le_norm_add_ofReal_mul_I {z : ℂ} (hz : 0 ≤ z.im) {s : ℝ}
+theorem norm_add_div_two_le_norm_add_ofReal_mul_I {z : ℂ} (hz : 0 ≤ z.im) {s : ℝ}
     (hs : 0 ≤ s) : (‖z‖ + s) / 2 ≤ ‖z + (s : ℂ) * Complex.I‖ := by
   have h1 := norm_le_norm_add_ofReal_mul_I hz hs
   have h2 : s ≤ ‖z + (s : ℂ) * Complex.I‖ := by
