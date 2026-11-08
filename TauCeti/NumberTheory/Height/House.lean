@@ -356,7 +356,7 @@ theorem naiveHeight_le_two_mul_pow_of_house_le {x : F} (hx : IsIntegral ℤ x) {
   have hroots : ∀ z ∈ ((primitiveMinpoly x).map (Int.castRingHom ℂ)).roots, ‖z‖ ≤ B := by
     intro z hz
     refine (norm_le_house_of_mem_rootSet ?_).trans hxB
-    rw [← rootSet_primitiveMinpoly halg, rootSet_def, Finset.mem_coe, Multiset.mem_toFinset,
+    rw [← rootSet_primitiveMinpoly x, rootSet_def, Finset.mem_coe, Multiset.mem_toFinset,
       aroots_def, algebraMap_int_eq]
     exact hz
   obtain ⟨i, hi⟩ := (primitiveMinpoly x).exists_eq_supNorm
