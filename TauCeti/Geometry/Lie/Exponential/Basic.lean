@@ -77,7 +77,7 @@ theorem mulInvariantExp_smul [CompleteSpace E]
 /-- The canonical one-parameter subgroup is the tangent-space exponential along its generating
 line. -/
 theorem mulInvariantOneParameterSubgroup_eq_mulInvariantExp_smul [CompleteSpace E]
-    [LieGroup I (minSmoothness ℝ 3) G] [IsManifold I 1 G] [T2Space G]
+    [LieGroup I (minSmoothness ℝ 3) G] [T2Space G]
     [BoundarylessManifold I G] (v : GroupLieAlgebra I G) (t : ℝ) :
     mulInvariantOneParameterSubgroup v (Multiplicative.ofAdd t) = mulInvariantExp (t • v) := by
   rw [mulInvariantOneParameterSubgroup_apply, mulInvariantExp_smul]
@@ -85,7 +85,7 @@ theorem mulInvariantOneParameterSubgroup_eq_mulInvariantExp_smul [CompleteSpace 
 /-- The exponential along a line satisfies the one-parameter subgroup law. -/
 @[simp]
 theorem mulInvariantExp_add_smul [CompleteSpace E]
-    [LieGroup I (minSmoothness ℝ 3) G] [IsManifold I 1 G] [T2Space G]
+    [LieGroup I (minSmoothness ℝ 3) G] [T2Space G]
     [BoundarylessManifold I G] (v : GroupLieAlgebra I G) (s t : ℝ) :
     mulInvariantExp ((s + t) • v) = mulInvariantExp (s • v) * mulInvariantExp (t • v) := by
   rw [mulInvariantExp_smul, mulInvariantExp_smul, mulInvariantExp_smul,
@@ -106,7 +106,7 @@ theorem mulInvariantExp_nsmul [CompleteSpace E]
 /-- The tangent-space exponential sends zero to the group identity. -/
 @[simp]
 theorem mulInvariantExp_zero [CompleteSpace E]
-    [LieGroup I (minSmoothness ℝ 3) G] [IsManifold I 1 G] [T2Space G]
+    [LieGroup I (minSmoothness ℝ 3) G] [T2Space G]
     [BoundarylessManifold I G] : mulInvariantExp (0 : GroupLieAlgebra I G) = 1 := by
   simpa using mulInvariantExp_smul (0 : GroupLieAlgebra I G) 0
 
