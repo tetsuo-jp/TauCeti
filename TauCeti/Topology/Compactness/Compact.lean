@@ -113,6 +113,22 @@ theorem isCompact_inter_preimage_comp_prodMk_left {Y Z : Type*} [TopologicalSpac
   exact ((hHp K hK hKU).inter_right (isClosed_singleton.preimage continuous_snd)).image
     continuous_fst
 
+section TubeLemma
+
+variable {α E P : Type*} [TopologicalSpace α] [CompactSpace α] [TopologicalSpace E]
+  [TopologicalSpace P] {ι : α → P} {W : Set (E × P)}
+
+/-- If `W` is open and `ι` is continuous on a compact space, the set of parameters `x` with
+`{x} × ι(α) ⊆ W` is open. -/
+theorem isOpen_forall_prodMk_mem (hι : Continuous ι) (hW : IsOpen W) :
+    IsOpen {x : E | ∀ y, (x, ι y) ∈ W} :=
+  isOpen_iff_eventually.2 fun _ hx₀ ↦
+    ((isCompact_range hι).eventually_forall_of_forall_eventually (P := fun x p ↦ (x, p) ∈ W)
+      (Set.forall_mem_range.2 fun y ↦ hW.mem_nhds (hx₀ y))).mono
+        fun _ h y ↦ h _ (Set.mem_range_self y)
+
+end TubeLemma
+
 end TauCeti
 
 end
