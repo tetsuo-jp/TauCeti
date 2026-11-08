@@ -20,6 +20,8 @@ The file also records the total mass of a rescaled restriction.
 ## Main results
 
 * `MeasureTheory.Measure.smul_restrict_univ`: `(s • μ.restrict A) univ = s * μ A`.
+* `MeasureTheory.Measure.pos_of_smul_restrict_le`: if `a μ ≤ b μ` on a set of nonzero measure,
+  with `a > 0`, then `b > 0`.
 * `MeasureTheory.ae_restrict_compl_eq_zero_of_tsupport_subset`: if `tsupport f ⊆ s`, then
   `f =ᵐ[μ.restrict sᶜ] 0`.
 -/
@@ -27,7 +29,7 @@ The file also records the total mass of a rescaled restriction.
 public section
 
 open Set
-open scoped ENNReal
+open scoped ENNReal NNReal
 
 namespace MeasureTheory
 
@@ -45,6 +47,17 @@ namespace Measure
 theorem smul_restrict_univ {α : Type*} [MeasurableSpace α] (s : ℝ≥0∞) (μ : Measure α)
     (A : Set α) : (s • μ.restrict A) univ = s * μ A := by
   simp only [_root_.smul_apply, Measure.restrict_apply MeasurableSet.univ, univ_inter, smul_eq_mul]
+
+/-- If `a μ` is bounded by `b μ` on a set `s` of nonzero measure, with `a > 0`, then `b > 0`. -/
+theorem pos_of_smul_restrict_le {α : Type*} [MeasurableSpace α] {μ : Measure α} {s : Set α}
+    {a b : ℝ≥0} (ha : 0 < a) (h : (a : ℝ≥0∞) • μ.restrict s ≤ (b : ℝ≥0∞) • μ.restrict s)
+    (hs : μ s ≠ 0) : 0 < b := by
+  refine pos_of_ne_zero fun h0 => ?_
+  have hle := Measure.le_iff'.1 h s
+  simp only [h0, ENNReal.coe_zero, zero_smul, _root_.smul_apply, smul_eq_mul,
+    Measure.restrict_apply_self, FunLike.coe_zero, Pi.zero_apply, nonpos_iff_eq_zero, mul_eq_zero,
+    ENNReal.coe_eq_zero] at hle
+  exact hle.elim ha.ne' hs
 
 end Measure
 
